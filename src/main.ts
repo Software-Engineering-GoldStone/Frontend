@@ -11,4 +11,8 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
+<<<<<<< HEAD
 app.mount('#app')
+=======
+app.mount('#app')
+>>>>>>> master

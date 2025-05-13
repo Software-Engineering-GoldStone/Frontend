@@ -12,12 +12,37 @@
     <!-- 전체 레이아웃 -->
     <div class="content-wrapper">
       <!-- 왼쪽 사이드바 -->
+<<<<<<< HEAD
       <Sidebar :players="playerList" />
 
       <!-- 메인 화면 (배경 이미지) -->
       <div class="room-background">
         <!-- 여기에 게임 본문 UI 등 넣을 수 있음 -->
       </div>
+=======
+      <Sidebar :players="playerList" class="fixed-sidebar" />
+
+      <!-- 메인 화면 (배경 이미지) -->
+      <div class="room-background">
+        <!-- 슬롯들이 유동적으로 꽉 차게 배치됨 -->
+        <div class="slot-grid">
+          <div
+            v-for="(slot, index) in slots" 
+            :key="index"
+            class="drop-slot"
+            @mouseenter="hoveredSlot = index"
+            @mouseleave="hoveredSlot = null"
+            :class="{ hovered: hoveredSlot === index }"
+            @dragover.prevent
+            @drop="onCardDrop(index)"
+          >
+           <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
+            <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
+          </div>
+        </div>
+      </div>
+
+>>>>>>> master
     </div>
 
     <!-- 오른쪽 사이드바 -->
@@ -27,7 +52,11 @@
     />
 
     <!-- 푸터 추가 -->
+<<<<<<< HEAD
     <Footer :cards="cards" />
+=======
+    <Footer :cards="cards" @drag-card="onCardDrag" />
+>>>>>>> master
   </div>
 </template>
 
@@ -60,6 +89,10 @@ export default {
   },
   data() {
     return {
+<<<<<<< HEAD
+=======
+      hoveredSlot: null,
+>>>>>>> master
       playerList: [
           { name: '나', image: player1, highlight: false },
         { name: 'player2', image: player2, highlight: false },
@@ -76,7 +109,13 @@ export default {
         { type: 'path', image: path_right_3 },
         { type: 'path', image: path_right_4 },
         { type: 'path', image: path_left_1 } 
+<<<<<<< HEAD
       ]
+=======
+      ],
+      draggedCard: null,
+      slots: Array(100).fill(null).map(() => ({ card: null })) // 슬롯 배열 초기화
+>>>>>>> master
     };
   },
   methods: {
@@ -85,6 +124,30 @@ export default {
     },
     handleDiscardCard() {
       console.log('카드 버리기!');
+<<<<<<< HEAD
+=======
+    },// 카드가 드래그되었을 때
+    onCardDrag(card) {
+      this.draggedCard = card;
+    },
+    // 카드가 드롭되었을 때 슬롯에 넣기
+    onCardDrop(slotIndex) {
+      if (this.draggedCard && !this.slots[slotIndex].card) {
+        console.log(`카드가 슬롯 ${slotIndex}에 드롭되었습니다.`);
+
+        // 슬롯에 카드 삽입
+        this.slots[slotIndex].card = this.draggedCard;
+
+        // 카드 목록에서 드래그한 카드 하나만 제거
+        const index = this.cards.indexOf(this.draggedCard);
+        if (index !== -1) {
+          this.cards.splice(index, 1);
+        }
+
+        // 드래그 상태 초기화
+        this.draggedCard = null;
+      }
+>>>>>>> master
     }
   }
 };
