@@ -2,17 +2,17 @@
   <div class="room-layout">
     <!-- 고정 헤더 -->
     <Header
-      :nickname="playerList[0].nickname"  
-      :role="playerList[0].role"  
+      :nickname="playerList[0].nickname"
+      :role="playerList[0].role"
       :turnPlayer="turnPlayer"
-      :gold="playerList[0].gold"  
+      :gold="playerList[0].gold"
       :round="round"
     />
 
     <!-- 전체 레이아웃 -->
     <div class="content-wrapper">
       <!-- 왼쪽 사이드바 -->
-      <Sidebar :players="playerList" />  <!-- 전체 플레이어 리스트 전달 -->
+      <Sidebar :players="playerList" />
 
       <!-- 메인 화면 -->
       <div class="room-background">
@@ -33,7 +33,7 @@
     <!-- 게임 결과 팝업 -->
     <GameResultPopup
       v-if="showGameResultPopup"
-      :players="sortedPlayers"
+      :players="[...playerList]"
       :round="round"
       @close="closeGameResultPopup"
     />
@@ -71,9 +71,8 @@ export default {
   },
   data() {
     return {
-      round: 2, // 라운드 번호
+      round: 2,
 
-      // 각 플레이어의 정보를 playerList 배열에 담기
       playerList: [
         { nickname: '강승희', role: '광부', gold: 3, image: player1, highlight: false },
         { nickname: '이혜민', role: '사보타지', gold: 2, image: player2, highlight: false },
@@ -82,9 +81,8 @@ export default {
         { nickname: 'player5', role: '광부', gold: 5, image: player5, highlight: false }
       ],
 
-      turnPlayer: '이혜민', // 현재 턴을 돌고 있는 플레이어
-
-      showGameResultPopup: false, // 게임 결과 팝업 상태
+      turnPlayer: '이혜민',
+      showGameResultPopup: false,
 
       cards: [
         { type: 'action', image: map },
@@ -98,12 +96,6 @@ export default {
       ]
     };
   },
-  computed: {
-    sortedPlayers() {
-      // 금덩이 개수 기준으로 내림차순 정렬
-      return this.playerList.slice().sort((a, b) => b.gold - a.gold);
-    }
-  },
   methods: {
     handleDrawCard() {
       console.log('카드 뽑기');
@@ -112,10 +104,10 @@ export default {
       console.log('카드 버리기');
     },
     handleEndGame() {
-      this.showGameResultPopup = true; // 게임 종료 시 팝업 띄우기
+      this.showGameResultPopup = true;
     },
     closeGameResultPopup() {
-      this.showGameResultPopup = false; // 팝업 닫기
+      this.showGameResultPopup = false;
     }
   }
 };

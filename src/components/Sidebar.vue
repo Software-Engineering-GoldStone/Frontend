@@ -4,6 +4,10 @@
       v-for="(player, index) in players"
       :key="index"
       :class="['player-box', { highlight: player.highlight }]">
+<<<<<<< HEAD
+=======
+      <!-- player.avatar를 player.image로 변경 -->
+>>>>>>> master
       <img :src="player.image" alt="avatar" class="avatar" />
       <div class="player-info">
         <span class="player-name">{{ player.nickname }}</span> <!-- 플레이어 이름 -->
