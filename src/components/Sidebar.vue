@@ -5,7 +5,9 @@
       :key="index"
       :class="['player-box', { highlight: player.highlight }]">
       <img :src="player.image" alt="avatar" class="avatar" />
-      <span>{{ player.name }}</span>
+      <div class="player-info">
+        <span class="player-name">{{ player.nickname }}</span> <!-- 플레이어 이름 -->
+      </div>
     </div>
   </aside>
 </template>
@@ -51,5 +53,16 @@ export default {
   margin-right: 10px;
   object-fit: cover;
   border-radius: 50%;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.player-name {
+  margin: 2px 0;
+  font-size: 14px;
 }
 </style>

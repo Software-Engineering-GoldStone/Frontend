@@ -6,7 +6,7 @@
     </div>
     <div class="game-status">
       <span>현재 턴: {{ turnPlayer }}</span>
-      <span>점수: {{ score }}</span>
+      <span>금덩이 개수: {{ gold }}</span>
       <span>라운드: {{ round }}</span>
     </div>
   </header>
@@ -18,7 +18,7 @@ export default {
     nickname: String,
     role: String,
     turnPlayer: String,
-    score: Number,
+    gold: Number,
     round: Number
   }
 };
