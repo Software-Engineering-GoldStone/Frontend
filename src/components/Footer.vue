@@ -20,14 +20,14 @@
     <div class="card-section">
       <h3>🛤️ 길카드 존</h3>
       <div class="card-row">
-        <div
-          v-for="(card, index) in pathCards"
-          :key="'path-' + index"
-          class="card"
-          @click="selectCard(card)"
+        <div 
+          v-for="card in cards" 
+          :key="card.id" 
+          class="card" 
+          draggable="true" 
+          @dragstart="onCardDrag(card)"
         >
-          <img :src="card.image" :alt="card.name" />
-          <p>{{ card.name }}</p>
+          <img :src="card.image" alt="card" />
         </div>
       </div>
     </div>
@@ -53,6 +53,10 @@ export default {
   methods: {
     selectCard(card) {
       this.$emit('cardSelected', card);
+    },
+    onCardDrag(card) {
+      // 드래그된 카드 정보를 부모로 전달
+      this.$emit('drag-card', card);
     }
   }
 };
