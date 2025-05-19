@@ -3,21 +3,72 @@
     <div
       v-for="(player, index) in players"
       :key="index"
+      @dragover.prevent
+      @drop="$emit('drop-on-player', index)" 
       :class="['player-box', { highlight: player.highlight }]">
       <img :src="player.image" alt="avatar" class="avatar" />
       <div class="player-info">
-        <span class="player-name">{{ player.nickname }}</span> <!-- 플레이어 이름 -->
+        <span class="player-name" style="margin-right: 12px;">{{ player.nickname }}</span> <!-- 플레이어 이름 -->
       </div>
+      <!-- 상태 아이콘 표시 -->
+      <img
+        v-if="player.status.includes('block_cart')"
+        :src="blocked_icons.cart_blocked"
+        class="status-icon"
+      />
+      <img
+        v-if="player.status.includes('block_lantern')"
+        :src="blocked_icons.lantern_blocked"
+        class="status-icon"
+      />
+      <img
+        v-if="player.status.includes('block_pickaxe')"
+        :src="blocked_icons.pickaxe_blocked"
+        class="status-icon"
+      />
+      <img
+        v-if="player.status.includes('repair_cart')"
+        :src="blocked_icons.cart_repaired"
+        class="status-icon"
+      />
+      <img
+        v-if="player.status.includes('repair_lantern')"
+        :src="blocked_icons.lantern_repaired"
+        class="status-icon"
+      />
+      <img
+        v-if="player.status.includes('repair_pickaxe')"
+        :src="blocked_icons.pickaxe_repaired"
+        class="status-icon"
+      />
     </div>
   </aside>
 </template>
 
 <script>
+import cart_blocked from '@/assets/img/icons/cart_blocked.png';
+import lantern_blocked from '@/assets/img/icons/lantern_blocked.png';
+import pickaxe_blocked from '@/assets/img/icons/pick_blocked.png';
+import cart_repaired from '@/assets/img/icons/cart_intact.png';
+import lantern_repaired from '@/assets/img/icons/lantern_intact.png';
+import pickaxe_repaired from '@/assets/img/icons/pick_intact.png';
 export default {
   props: {
     players: {
       type: Array,
       required: true
+    }
+  },
+  data() {
+    return {
+      blocked_icons: {
+        cart_blocked,
+        lantern_blocked,
+        pickaxe_blocked,
+        cart_repaired,
+        lantern_repaired,
+        pickaxe_repaired
+      },
     }
   }
 };
