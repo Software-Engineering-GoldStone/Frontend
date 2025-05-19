@@ -12,7 +12,9 @@
     <!-- 전체 레이아웃 -->
     <div class="content-wrapper">
       <!-- 왼쪽 사이드바 -->
-      <Sidebar :players="playerList" class="fixed-sidebar" />
+      <Sidebar :players="playerList" 
+      class="fixed-sidebar" 
+      @drop-on-player="onDropOnPlayer"/>
 
       <!-- 메인 화면 (배경 이미지) -->
       <div class="room-background" >
@@ -97,8 +99,12 @@ import path_right_3 from '@/assets/img/cards/path_right_3.png';
 import path_right_4 from '@/assets/img/cards/path_right_4.png';
 import path_left_1 from '@/assets/img/cards/path_left_1.png';
 import map from '@/assets/img/cards/map.png';
+import block_cart from '@/assets/img/cards/block_cart.png';
+import block_lantern from '@/assets/img/cards/block_lantern.png';
+import block_pickaxe from '@/assets/img/cards/block_pickaxe.png';
 import repair_cart from '@/assets/img/cards/repair_cart.png';
 import repair_lantern from '@/assets/img/cards/repair_lantern.png';
+import repair_pickaxe from '@/assets/img/cards/repair_pickaxe.png';
 import rockfall from '@/assets/img/cards/rockfall.png';
 import player1 from '@/assets/player1.png';
 import player2 from '@/assets/player2.png';
@@ -127,11 +133,11 @@ export default {
       round: 2,
       hoveredSlot: null,
       playerList: [
-        { nickname: '강승희', role: '광부', gold: 3, image: player1, highlight: false },
-        { nickname: '이혜민', role: '사보타지', gold: 2, image: player2, highlight: false },
-        { nickname: 'player3', role: '광부', gold: 4, image: player3, highlight: false },
-        { nickname: 'player4', role: '사보타지', gold: 1, image: player4, highlight: false },
-        { nickname: 'player5', role: '광부', gold: 5, image: player5, highlight: false }
+        { nickname: '강승희', role: '광부', gold: 3, image: player1, highlight: false, status: []},
+        { nickname: '이혜민', role: '사보타지', gold: 2, image: player2, highlight: false, status: [] },
+        { nickname: 'player3', role: '광부', gold: 4, image: player3, highlight: false, status: [] },
+        { nickname: 'player4', role: '사보타지', gold: 1, image: player4, highlight: false, status: [] },
+        { nickname: 'player5', role: '광부', gold: 5, image: player5, highlight: false, status: [] }
       ],
 
       turnPlayer: '이혜민',
@@ -139,9 +145,13 @@ export default {
 
       cards: [
         { type: 'action', image: map },
-        { type: 'action', image: repair_cart },
-        { type: 'action', image: repair_lantern },
-        { type: 'action',subtype: 'rockfall', image: rockfall },
+        { type: 'action', subtype: 'rockfall', image: rockfall },
+        { type: 'action', subtype: 'block_cart', image: block_cart },
+        { type: 'action', subtype: 'block_lantern', image: block_lantern },
+        { type: 'action', subtype: 'block_pickaxe', image: block_pickaxe },
+        { type: 'action', subtype: 'repair_cart', image: repair_cart },
+        { type: 'action', subtype: 'repair_lantern', image: repair_lantern },
+        { type: 'action', subtype: 'repair_pickaxe', image: repair_pickaxe },
         { type: 'path', image: path_right_1 },
         { type: 'path', image: path_right_2 },
         { type: 'path', image: path_right_3 },
@@ -201,19 +211,63 @@ export default {
           }
         }
       } else if (this.draggedCard && this.draggedCard.type === 'action' && this.draggedCard.subtype !== 'rockfall') {
-        console.log('이 action 카드는 슬롯에 놓을 수 없습니다.');
-        return;
+          console.log('이 action 카드는 슬롯에 놓을 수 없습니다.');
+          return;
       } else {
-        this.slots[slotIndex].card = this.draggedCard;
+          this.slots[slotIndex].card = this.draggedCard;
 
-        const index = this.cards.indexOf(this.draggedCard);
-        if (index !== -1) {
-          this.cards.splice(index, 1);
+          const index = this.cards.indexOf(this.draggedCard);
+          if (index !== -1) {
+            this.cards.splice(index, 1);
+          }
+
+          this.draggedCard = null;
+      }
+    },
+    onDropOnPlayer(playerIndex) {
+      if (!this.draggedCard || this.draggedCard.type !== 'action') return;
+
+      const subtype = this.draggedCard.subtype;
+      const player = this.playerList[playerIndex];
+
+      // 수리/블록 카드만 처리
+      const validTypes = [
+        'block_cart', 'block_lantern', 'block_pickaxe',
+        'repair_cart', 'repair_lantern', 'repair_pickaxe'
+      ];
+      if (!validTypes.includes(subtype)) return;
+
+      // 수리 카드 대응 관계 설정
+      const repairToBlockMap = {
+        repair_cart: 'block_cart',
+        repair_lantern: 'block_lantern',
+        repair_pickaxe: 'block_pickaxe'
+      };
+
+      if (subtype.startsWith('repair')) {
+        const blockType = repairToBlockMap[subtype];
+
+        // 플레이어가 해당 block 상태이면 제거
+        if (player.status.includes(blockType)) {
+          player.status = player.status.filter(s => s !== blockType);
+        } else {
+          return; // 짝 안 맞으면 아무것도 안 함
         }
 
-        this.draggedCard = null;
-
+      } else {
+        // block 카드일 경우: 중복 없이 추가
+        if (!player.status.includes(subtype)) {
+          player.status.push(subtype);
+        }
       }
+
+      // 드래그한 카드 제거
+      const cardIdx = this.cards.indexOf(this.draggedCard);
+      if (cardIdx !== -1) {
+        this.cards.splice(cardIdx, 1);
+      }
+
+      this.draggedCard = null;
     }
   }
 };
