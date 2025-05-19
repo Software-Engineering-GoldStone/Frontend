@@ -9,7 +9,7 @@
 export default {
   methods: {
     createRoom() {
-      this.$router.push('/room')
+      this.$router.push('/room');
     }
   }
 }
@@ -17,8 +17,12 @@ export default {
 
 <style scoped>
 .lobby {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 수직 가운데 정렬 */
+  align-items: center;     /* 수평 가운데 정렬 */
+  height: 100vh;           /* 화면 전체 높이 */
   text-align: center;
-  padding: 20px;
 }
 
 .create-room-btn {
@@ -28,36 +32,10 @@ export default {
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .create-room-btn:hover {
   background-color: #45a049;
-}
-
-.room-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.room-item {
-  display: flex;
-  justify-content: space-between;
-  margin: 10px 0;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.join-room-btn {
-  background-color: #2196F3;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.join-room-btn:hover {
-  background-color: #0b7dda;
 }
 </style>
