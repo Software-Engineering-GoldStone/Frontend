@@ -7,6 +7,7 @@
       :turnPlayer="turnPlayer"
       :gold="playerList[0].gold"
       :round="round"
+      :friends="playerList.map(p => p.nickname)"
     />
 
     <!-- 전체 레이아웃 -->
