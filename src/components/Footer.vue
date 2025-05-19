@@ -8,7 +8,9 @@
           v-for="(card, index) in actionCards"
           :key="'action-' + index"
           class="card"
+          draggable="true" 
           @click="selectCard(card)"
+          @dragstart="onCardDrag(card)"
         >
           <img :src="card.image" :alt="card.name" />
           <p>{{ card.name }}</p>
@@ -21,7 +23,7 @@
       <h3>🛤️ 길카드 존</h3>
       <div class="card-row">
         <div 
-          v-for="card in cards" 
+          v-for="card in pathCards" 
           :key="card.id" 
           class="card" 
           draggable="true" 

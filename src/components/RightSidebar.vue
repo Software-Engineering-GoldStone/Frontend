@@ -5,7 +5,8 @@
         <div class="zone draw-zone" @click="drawCard">
           <img :src="drawCardImage" alt="카드 뽑기 이미지" class="zone-icon" />
         </div>
-        <div class="zone discard-zone" @click="discardCard">
+        <div class="zone discard-zone" @click="discardCard" @drop="onDrop"
+        @dragover.prevent>
           <img :src="disCardImage" alt="카드 버리기 이미지" class="zone-icon" />
         </div>
       </div>
@@ -37,6 +38,17 @@ export default {
     endGame() {
       // 게임 종료 이벤트 발생
       this.$emit('end-game');
+    },
+    onDrop(event) {
+      const data = event.dataTransfer.getData('application/json')
+      if (!data) return
+
+      try {
+        const card = JSON.parse(data)
+        this.$emit('discard-card', card)  // 부모에게 삭제 요청
+      } catch (e) {
+        console.error('카드 JSON 파싱 실패:', e)
+      }
     }
   }
 };

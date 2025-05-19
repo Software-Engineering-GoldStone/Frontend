@@ -15,9 +15,36 @@
       <Sidebar :players="playerList" class="fixed-sidebar" />
 
       <!-- 메인 화면 (배경 이미지) -->
-      <div class="room-background">
+      <div class="room-background" >
         <!-- 슬롯들이 유동적으로 꽉 차게 배치됨 -->
         <div class="slot-grid">
+          <!-- 출발지 카드 전용 wrapper -->
+          <div class="start-wrapper">
+            <!-- 출발지 카드 (고정) -->
+            <div class="drop-slot start-card">
+              <img :src="startCard.image" alt="Start Card" class="dropped-card" />
+            </div>
+          </div>
+          <!-- 목표 카드 1 (1행 8열) -->
+          <div class="goal-wrapper goal-1">
+            <div class="drop-slot goal-card">
+              <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
+            </div>
+          </div>
+
+          <!-- 목표 카드 2 (3행 8열) -->
+          <div class="goal-wrapper goal-2">
+            <div class="drop-slot goal-card">
+              <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
+            </div>
+          </div>
+
+          <!-- 목표 카드 3 (5행 8열) -->
+          <div class="goal-wrapper goal-3">
+            <div class="drop-slot goal-card">
+              <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
+            </div>
+          </div>
           <div
             v-for="(slot, index) in slots" 
             :key="index"
@@ -62,6 +89,8 @@ import RightSidebar from '@/components/RightSidebar.vue';
 import Footer from '@/components/Footer.vue';
 import GameResultPopup from '@/components/GameResultPopup.vue';
 
+import startCardImg from '@/assets/img/cards/start.png';
+import goalBackImg from '@/assets/img/cards/goal_back.png';
 import path_right_1 from '@/assets/img/cards/path_right_1.png';
 import path_right_2 from '@/assets/img/cards/path_right_2.png';
 import path_right_3 from '@/assets/img/cards/path_right_3.png';
@@ -70,6 +99,7 @@ import path_left_1 from '@/assets/img/cards/path_left_1.png';
 import map from '@/assets/img/cards/map.png';
 import repair_cart from '@/assets/img/cards/repair_cart.png';
 import repair_lantern from '@/assets/img/cards/repair_lantern.png';
+import rockfall from '@/assets/img/cards/rockfall.png';
 import player1 from '@/assets/player1.png';
 import player2 from '@/assets/player2.png';
 import player3 from '@/assets/player3.png';
@@ -86,6 +116,14 @@ export default {
   },
   data() {
     return {
+      startCard: {
+        image: startCardImg
+      },
+      goalCards: [
+        { image: goalBackImg },
+        { image: goalBackImg },
+        { image: goalBackImg }
+      ],
       round: 2,
       hoveredSlot: null,
       playerList: [
@@ -103,14 +141,16 @@ export default {
         { type: 'action', image: map },
         { type: 'action', image: repair_cart },
         { type: 'action', image: repair_lantern },
+        { type: 'action',subtype: 'rockfall', image: rockfall },
         { type: 'path', image: path_right_1 },
         { type: 'path', image: path_right_2 },
         { type: 'path', image: path_right_3 },
         { type: 'path', image: path_right_4 },
-        { type: 'path', image: path_left_1 }
+        { type: 'path', image: path_left_1 },
+        
       ],  
       draggedCard: null,
-      slots: Array(100).fill(null).map(() => ({ card: null })) // 슬롯 배열 초기화
+      slots: Array(500).fill(null).map(() => ({ card: null })) // 슬롯 배열 초기화
     };
   },
   methods: {
@@ -119,6 +159,15 @@ export default {
     },
     handleDiscardCard() {
       console.log('카드 버리기');
+      // 카드 목록에서 드래그한 카드 하나만 제거
+      const index = this.cards.indexOf(this.draggedCard);
+        if (index !== -1) {
+          this.cards.splice(index, 1);
+        }
+        
+        // 드래그 상태 초기화
+        this.draggedCard = null;
+
     },
     handleEndGame() {
       this.showGameResultPopup = true;
@@ -129,23 +178,41 @@ export default {
     // 카드가 드래그되었을 때
     onCardDrag(card) {
       this.draggedCard = card;
+
+      // 드래그할 데이터를 dataTransfer에 저장
+      event.dataTransfer.setData('application/json', JSON.stringify(card))
+        
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
     onCardDrop(slotIndex) {
-      if (this.draggedCard && !this.slots[slotIndex].card) {
-        console.log(`카드가 슬롯 ${slotIndex}에 드롭되었습니다.`);
+      if (!this.draggedCard) return;
 
-        // 슬롯에 카드 삽입
+      // 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
+      if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
+
+        if (this.slots[slotIndex].card) {
+            // 기존 슬롯 카드 삭제
+          this.slots[slotIndex].card = null;
+
+          // rockfall 카드도 카드 목록에서 삭제
+          const index = this.cards.indexOf(this.draggedCard);
+          if (index !== -1) {
+            this.cards.splice(index, 1);
+          }
+        }
+      } else if (this.draggedCard && this.draggedCard.type === 'action' && this.draggedCard.subtype !== 'rockfall') {
+        console.log('이 action 카드는 슬롯에 놓을 수 없습니다.');
+        return;
+      } else {
         this.slots[slotIndex].card = this.draggedCard;
 
-        // 카드 목록에서 드래그한 카드 하나만 제거
         const index = this.cards.indexOf(this.draggedCard);
         if (index !== -1) {
           this.cards.splice(index, 1);
         }
 
-        // 드래그 상태 초기화
         this.draggedCard = null;
+
       }
     }
   }
