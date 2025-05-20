@@ -18,48 +18,58 @@
       @drop-on-player="onDropOnPlayer"/>
 
       <!-- 메인 화면 (배경 이미지) -->
-      <div class="room-background" >
-        <!-- 슬롯들이 유동적으로 꽉 차게 배치됨 -->
-        <div class="slot-grid">
-          <!-- 출발지 카드 전용 wrapper -->
-          <div class="start-wrapper">
-            <!-- 출발지 카드 (고정) -->
-            <div class="drop-slot start-card">
-              <img :src="startCard.image" alt="Start Card" class="dropped-card" />
+      <div ref="room-background" class="room-background" >
+        <!-- 드래그하여 맵 탐색하기 구현 -->
+        <div 
+          class="map-draggable-wrapper"
+          @mousedown="startDragging"
+          @mousemove="onDragging"
+          @mouseup="stopDragging"
+          @mouseleave="stopDragging"
+          :style="{ transform: `translate(${offset.x}px, ${offset.y}px)` }"
+        >
+          <!-- 슬롯들이 유동적으로 꽉 차게 배치됨 -->
+          <div class="slot-grid">
+            <!-- 출발지 카드 전용 wrapper -->
+            <div class="start-wrapper">
+              <!-- 출발지 카드 (고정) -->
+              <div class="drop-slot start-card">
+                <img :src="startCard.image" alt="Start Card" class="dropped-card" />
+              </div>
             </div>
-          </div>
-          <!-- 목표 카드 1 (1행 8열) -->
-          <div class="goal-wrapper goal-1">
-            <div class="drop-slot goal-card">
-              <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
+            <!-- 목표 카드 1 (1행 8열) -->
+            <div class="goal-wrapper goal-1">
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
+              </div>
             </div>
-          </div>
 
-          <!-- 목표 카드 2 (3행 8열) -->
-          <div class="goal-wrapper goal-2">
-            <div class="drop-slot goal-card">
-              <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
+            <!-- 목표 카드 2 (3행 8열) -->
+            <div class="goal-wrapper goal-2">
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
+              </div>
             </div>
-          </div>
 
-          <!-- 목표 카드 3 (5행 8열) -->
-          <div class="goal-wrapper goal-3">
-            <div class="drop-slot goal-card">
-              <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
+            <!-- 목표 카드 3 (5행 8열) -->
+            <div class="goal-wrapper goal-3">
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
+              </div>
             </div>
-          </div>
-          <div
-            v-for="(slot, index) in slots" 
-            :key="index"
-            class="drop-slot"
-            @mouseenter="hoveredSlot = index"
-            @mouseleave="hoveredSlot = null"
-            :class="{ hovered: hoveredSlot === index }"
-            @dragover.prevent
-            @drop="onCardDrop(index)"
-          >
-           <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
-            <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
+            <div
+              v-for="(slot, index) in slots" 
+              :key="index"
+              class="drop-slot"
+              @mouseenter="hoveredSlot = index"
+              @mouseleave="hoveredSlot = null"
+              :class="{ hovered: hoveredSlot === index }"
+              @dragover.prevent
+              @drop="onCardDrop(index)"
+            >
+            <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
+              <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
+            </div>
           </div>
         </div>
       </div>
@@ -161,7 +171,10 @@ export default {
         
       ],  
       draggedCard: null,
-      slots: Array(500).fill(null).map(() => ({ card: null })) // 슬롯 배열 초기화
+      slots: Array(900).fill(null).map(() => ({ card: null })), // 슬롯 배열 초기화
+      offset: { x: 32, y: 288 },
+      isDragging: false,
+      dragStart: { x: 0, y: 0 },
     };
   },
   methods: {
@@ -269,6 +282,27 @@ export default {
       }
 
       this.draggedCard = null;
+    },
+
+    // 맵 드래그하여 탐색할 때
+    startDragging(event) {
+      this.isDragging = true;
+      this.dragStart = {
+        x: event.clientX - this.offset.x,
+        y: event.clientY - this.offset.y
+      };
+    },
+    onDragging(event) {
+      if (!this.isDragging) return;
+      const newX = event.clientX - this.dragStart.x;
+      const newY = event.clientY - this.dragStart.y;
+      this.offset = {
+        x: Math.max(-900, Math.min(900, newX)),
+        y: Math.max(-1440, Math.min(1440, newY))
+      };
+    },
+    stopDragging() {
+      this.isDragging = false;
     }
   }
 };
