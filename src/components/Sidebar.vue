@@ -46,12 +46,6 @@
 </template>
 
 <script>
-import cart_blocked from '@/assets/img/icons/cart_blocked.png';
-import lantern_blocked from '@/assets/img/icons/lantern_blocked.png';
-import pickaxe_blocked from '@/assets/img/icons/pick_blocked.png';
-import cart_repaired from '@/assets/img/icons/cart_intact.png';
-import lantern_repaired from '@/assets/img/icons/lantern_intact.png';
-import pickaxe_repaired from '@/assets/img/icons/pick_intact.png';
 export default {
   props: {
     players: {
@@ -62,12 +56,12 @@ export default {
   data() {
     return {
       blocked_icons: {
-        cart_blocked,
-        lantern_blocked,
-        pickaxe_blocked,
-        cart_repaired,
-        lantern_repaired,
-        pickaxe_repaired
+        cart_blocked: '/img/icons/cart_blocked.png',
+        lantern_blocked: '/img/icons/lantern_blocked.png',
+        pickaxe_blocked: '/img/icons/pick_blocked.png',
+        cart_repaired: '/img/icons/cart_intact.png',
+        lantern_repaired: '/img/icons/lantern_intact.png',
+        pickaxe_repaired: '/img/icons/pick_intact.png'
       },
     }
   }

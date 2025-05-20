@@ -102,21 +102,6 @@ import RightSidebar from '@/components/RightSidebar.vue';
 import Footer from '@/components/Footer.vue';
 import GameResultPopup from '@/components/GameResultPopup.vue';
 
-import startCardImg from '@/assets/img/cards/start.png';
-import goalBackImg from '@/assets/img/cards/goal_back.png';
-import path_right_1 from '@/assets/img/cards/path_right_1.png';
-import path_right_2 from '@/assets/img/cards/path_right_2.png';
-import path_right_3 from '@/assets/img/cards/path_right_3.png';
-import path_right_4 from '@/assets/img/cards/path_right_4.png';
-import path_left_1 from '@/assets/img/cards/path_left_1.png';
-import map from '@/assets/img/cards/map.png';
-import block_cart from '@/assets/img/cards/block_cart.png';
-import block_lantern from '@/assets/img/cards/block_lantern.png';
-import block_pickaxe from '@/assets/img/cards/block_pickaxe.png';
-import repair_cart from '@/assets/img/cards/repair_cart.png';
-import repair_lantern from '@/assets/img/cards/repair_lantern.png';
-import repair_pickaxe from '@/assets/img/cards/repair_pickaxe.png';
-import rockfall from '@/assets/img/cards/rockfall.png';
 import player1 from '@/assets/player1.png';
 import player2 from '@/assets/player2.png';
 import player3 from '@/assets/player3.png';
@@ -134,12 +119,12 @@ export default {
   data() {
     return {
       startCard: {
-        image: startCardImg
+        image: '/img/cards/start.png'
       },
       goalCards: [
-        { image: goalBackImg },
-        { image: goalBackImg },
-        { image: goalBackImg }
+        { image: '/img/cards/goal_back.png' },
+        { image: '/img/cards/goal_back.png' },
+        { image: '/img/cards/goal_back.png' }
       ],
       round: 2,
       hoveredSlot: null,
@@ -155,19 +140,19 @@ export default {
       showGameResultPopup: false,
 
       cards: [
-        { type: 'action', image: map },
-        { type: 'action', subtype: 'rockfall', image: rockfall },
-        { type: 'action', subtype: 'block_cart', image: block_cart },
-        { type: 'action', subtype: 'block_lantern', image: block_lantern },
-        { type: 'action', subtype: 'block_pickaxe', image: block_pickaxe },
-        { type: 'action', subtype: 'repair_cart', image: repair_cart },
-        { type: 'action', subtype: 'repair_lantern', image: repair_lantern },
-        { type: 'action', subtype: 'repair_pickaxe', image: repair_pickaxe },
-        { type: 'path', image: path_right_1 },
-        { type: 'path', image: path_right_2 },
-        { type: 'path', image: path_right_3 },
-        { type: 'path', image: path_right_4 },
-        { type: 'path', image: path_left_1 },
+        { type: 'action', image: '/img/cards/map.png' },
+        { type: 'action', subtype: 'rockfall', image: '/img/cards/rockfall.png' },
+        { type: 'action', subtype: 'block_cart', image: '/img/cards/block_cart.png' },
+        { type: 'action', subtype: 'block_lantern', image: '/img/cards/block_lantern.png' },
+        { type: 'action', subtype: 'block_pickaxe', image: '/img/cards/block_pickaxe.png' },
+        { type: 'action', subtype: 'repair_cart', image: '/img/cards/repair_cart.png' },
+        { type: 'action', subtype: 'repair_lantern', image: '/img/cards/repair_lantern.png' },
+        { type: 'action', subtype: 'repair_pickaxe', image: '/img/cards/repair_pickaxe.png' },
+        { type: 'path', image: '/img/cards/path_right_1.png' },
+        { type: 'path', image: '/img/cards/path_right_2.png' },
+        { type: 'path', image: '/img/cards/path_right_3.png' },
+        { type: 'path', image: '/img/cards/path_right_4.png' },
+        { type: 'path', image: '/img/cards/path_left_1.png' },
         
       ],  
       draggedCard: null,

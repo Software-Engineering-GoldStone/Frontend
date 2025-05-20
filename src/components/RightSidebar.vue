@@ -18,14 +18,12 @@
 </template>
 
 <script>
-import drawCardImage from '@/assets/img/cards/playable_back.png';
-import disCardImage from '@/assets/discard.png';
 
 export default {
   data() {
     return {
-      drawCardImage,
-      disCardImage
+      drawCardImage: '/img/cards/playable_back.png',
+      disCardImage: '/img/ui/discard.png'
     };
   },
   methods: {
