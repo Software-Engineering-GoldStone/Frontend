@@ -167,7 +167,14 @@ export default {
         { type: 'path', image: '/img/cards/path_right_4.png' },
         { type: 'path', image: '/img/cards/path_left_1.png' },
         
-      ],  
+      ],
+      availableCards: [   // 아직 안 가진 카드들 덱(예시)
+          { id: 1, type: 'path', name: 'path_crossroad_1', image: '/img/cards/path_crossroad_1.png' },
+          { id: 2, type: 'path', name: 'path_crossroad_2', image: '/img/cards/path_crossroad_2.png' },
+          { id: 3, type: 'path', name: 'path_crossroad_3', image: '/img/cards/path_crossroad_3.png' },
+          { id: 4, type: 'path', name: 'path_crossroad_4', image: '/img/cards/path_crossroad_4.png' },
+          { id: 5, type: 'path', name: 'path_crossroad_5', image: '/img/cards/path_crossroad_5.png' },
+      ],
       draggedCard: null,
       slots: Array(900).fill(null).map(() => ({ card: null })), // 슬롯 배열 초기화
       offset: { x: 32, y: 288 },
@@ -275,6 +282,19 @@ export default {
           }
 
           this.draggedCard = null;
+
+          // 랜덤 카드 한 장 새로 획득하는 코드 예시
+          if (this.availableCards && this.availableCards.length > 0) {
+            // availableCards 는 카드 더미 (덱)라고 가정
+            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+            const randomCard = this.availableCards[randomIndex];
+
+            // 내 카드 배열(cards)에 추가
+            this.cards.push(randomCard);
+
+            // 덱(availableCards)에서는 제거
+            this.availableCards.splice(randomIndex, 1);
+          }
       }
     },
     onDropOnPlayer(playerIndex) {
