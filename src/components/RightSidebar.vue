@@ -23,7 +23,7 @@ export default {
   data() {
     return {
       drawCardImage: '/img/cards/playable_back.png',
-      disCardImage: '/img/cards/discard.png'
+      disCardImage: '/img/ui/discard.png'
     };
   },
   methods: {
