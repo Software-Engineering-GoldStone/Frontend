@@ -10,10 +10,9 @@
           class="card"
           draggable="true" 
           @click="selectCard(card)"
-          @dragstart="onCardDrag(card)"
+          @dragstart="(e) => onCardDrag(card, e)"
         >
-          <img :src="card.image" :alt="card.name" />
-          <p>{{ card.name }}</p>
+          <img :src="card.image" :alt="card" />
         </div>
       </div>
     </div>

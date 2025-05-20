@@ -38,25 +38,38 @@
               </div>
             </div>
             <!-- 목표 카드 1 (1행 8열) -->
-            <div class="goal-wrapper goal-1">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
-              </div>
-            </div>
+<div
+  class="goal-wrapper goal-1"
+  @dragover.prevent
+  @drop.prevent="revealGoalCard(0)"
+>
+  <div class="drop-slot goal-card">
+    <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
+  </div>
+</div>
 
-            <!-- 목표 카드 2 (3행 8열) -->
-            <div class="goal-wrapper goal-2">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
-              </div>
-            </div>
+<!-- 목표 카드 2 -->
+<div
+  class="goal-wrapper goal-2"
+  @dragover.prevent
+  @drop.prevent="revealGoalCard(1)"
+>
+  <div class="drop-slot goal-card">
+    <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
+  </div>
+</div>
 
-            <!-- 목표 카드 3 (5행 8열) -->
-            <div class="goal-wrapper goal-3">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
-              </div>
-            </div>
+<!-- 목표 카드 3 -->
+<div
+  class="goal-wrapper goal-3"
+  @dragover.prevent
+  @drop.prevent="revealGoalCard(2)"
+>
+  <div class="drop-slot goal-card">
+    <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
+  </div>
+</div>
+
             <div
               v-for="(slot, index) in slots" 
               :key="index"
@@ -65,7 +78,7 @@
               @mouseleave="hoveredSlot = null"
               :class="{ hovered: hoveredSlot === index }"
               @dragover.prevent
-              @drop="onCardDrop(index)"
+              @drop.prevent="onCardDrop(index)"
             >
             <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
               <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
@@ -163,6 +176,47 @@ export default {
     };
   },
   methods: {
+    revealGoalCard(goalIndex) {
+      // 드래그된 카드가 map 카드일 때만 실행
+      if (!this.draggedCard || this.draggedCard.image !== '/img/cards/map.png') {
+        console.log('map 카드가 아닙니다.');
+        return;
+      }
+
+      // 이미 공개된 목표 카드면 무시
+      const currentImage = this.goalCards[goalIndex].image;
+      if (currentImage !== '/img/cards/goal_back.png') {
+        console.log('이미 공개된 목표 카드입니다.');
+        return;
+      }
+
+      // 랜덤하게 goal_gold / goal_rock_1 / goal_rock_2 중 하나 선택
+      const goalImages = [
+        '/img/cards/goal_gold.png',
+        '/img/cards/goal_rock_1.png',
+        '/img/cards/goal_rock_2.png'
+      ];
+      const randomIndex = Math.floor(Math.random() * goalImages.length);
+
+      const selectedImage = goalImages[randomIndex];
+
+      // 카드 일시적으로 공개
+      this.goalCards[goalIndex].image = selectedImage;
+
+      // 5초 후 다시 뒤집기
+      setTimeout(() => {
+        this.goalCards[goalIndex].image = '/img/cards/goal_back.png';
+      }, 2000);
+
+      // map 카드는 카드 목록에서 제거
+      const index = this.cards.indexOf(this.draggedCard);
+      if (index !== -1) {
+        this.cards.splice(index, 1);
+      }
+
+      // 드래그 상태 초기화
+      this.draggedCard = null;
+    },
     handleDrawCard() {
       console.log('카드 뽑기');
     },
@@ -185,12 +239,12 @@ export default {
       this.showGameResultPopup = false;
     },
     // 카드가 드래그되었을 때
-    onCardDrag(card) {
+    onCardDrag(card, event) {
       this.draggedCard = card;
 
-      // 드래그할 데이터를 dataTransfer에 저장
-      event.dataTransfer.setData('application/json', JSON.stringify(card))
-        
+      if (event && event.dataTransfer) {
+        event.dataTransfer.setData('application/json', JSON.stringify(card));
+      }  
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
     onCardDrop(slotIndex) {
@@ -268,6 +322,7 @@ export default {
 
       this.draggedCard = null;
     },
+    
 
     // 맵 드래그하여 탐색할 때
     startDragging(event) {
