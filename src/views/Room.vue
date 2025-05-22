@@ -5,7 +5,7 @@
       :nickname="playerList[0].nickname"
       :role="playerList[0].role"
       :turnPlayer="turnPlayer"
-      :gold="playerList[0].gold"
+      :gold="myPlayer.gold"
       :round="round"
       :friends="playerList.map(p => p.nickname)"
     />
@@ -38,37 +38,37 @@
               </div>
             </div>
             <!-- 목표 카드 1 (1행 8열) -->
-<div
-  class="goal-wrapper goal-1"
-  @dragover.prevent
-  @drop.prevent="revealGoalCard(0)"
->
-  <div class="drop-slot goal-card">
-    <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
-  </div>
-</div>
+            <div
+              class="goal-wrapper goal-1"
+              @dragover.prevent
+              @drop.prevent="revealGoalCard(0)"
+            >
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
+              </div>
+            </div>
 
-<!-- 목표 카드 2 -->
-<div
-  class="goal-wrapper goal-2"
-  @dragover.prevent
-  @drop.prevent="revealGoalCard(1)"
->
-  <div class="drop-slot goal-card">
-    <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
-  </div>
-</div>
+            <!-- 목표 카드 2 -->
+            <div
+              class="goal-wrapper goal-2"
+              @dragover.prevent
+              @drop.prevent="revealGoalCard(1)"
+            >
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
+              </div>
+            </div>
 
-<!-- 목표 카드 3 -->
-<div
-  class="goal-wrapper goal-3"
-  @dragover.prevent
-  @drop.prevent="revealGoalCard(2)"
->
-  <div class="drop-slot goal-card">
-    <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
-  </div>
-</div>
+            <!-- 목표 카드 3 -->
+            <div
+              class="goal-wrapper goal-3"
+              @dragover.prevent
+              @drop.prevent="revealGoalCard(2)"
+            >
+              <div class="drop-slot goal-card">
+                <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
+              </div>
+            </div>
 
             <div
               v-for="(slot, index) in slots" 
@@ -81,7 +81,7 @@
               @drop.prevent="onCardDrop(index)"
             >
             <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
-              <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
+            <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
             </div>
           </div>
         </div>
@@ -93,6 +93,7 @@
       @draw-card="handleDrawCard"
       @discard-card="handleDiscardCard"
       @end-game="handleEndGame"
+      @open-goldstone-popup="openGoldstonePopup"
     />
 
     <!-- 푸터  -->
@@ -105,6 +106,15 @@
       :round="round"
       @close="closeGameResultPopup"
     />
+    <!-- 금덩이 카드 분배 팝업 -->
+    <GoldstoneCardDistributionPopup
+      v-if="showGoldstoneCardDistributionPopup"
+      :playerNames="playerNames"
+      :distributedCards="distributedCards"
+      :myNickname="myNickname"
+      @confirm-gold="handleGoldConfirm"
+      @close="closeGoldstoneCardDistributionPopup"
+    />
   </div>
 </template>
 
@@ -114,7 +124,7 @@ import Sidebar from '@/components/Sidebar.vue';
 import RightSidebar from '@/components/RightSidebar.vue';
 import Footer from '@/components/Footer.vue';
 import GameResultPopup from '@/components/GameResultPopup.vue';
-
+import GoldstoneCardDistributionPopup from '@/components/GoldDistributionPopup.vue';
 import player1 from '@/assets/player1.png';
 import player2 from '@/assets/player2.png';
 import player3 from '@/assets/player3.png';
@@ -127,7 +137,8 @@ export default {
     Sidebar,
     RightSidebar,
     Footer,
-    GameResultPopup
+    GameResultPopup,
+    GoldstoneCardDistributionPopup
   },
   data() {
     return {
@@ -142,16 +153,16 @@ export default {
       round: 2,
       hoveredSlot: null,
       playerList: [
-        { nickname: '강승희', role: '광부', gold: 3, image: player1, highlight: false, status: []},
-        { nickname: '이혜민', role: '사보타지', gold: 2, image: player2, highlight: false, status: [] },
-        { nickname: 'player3', role: '광부', gold: 4, image: player3, highlight: false, status: [] },
-        { nickname: 'player4', role: '사보타지', gold: 1, image: player4, highlight: false, status: [] },
-        { nickname: 'player5', role: '광부', gold: 5, image: player5, highlight: false, status: [] }
+        { nickname: '강승희', role: '광부', gold: 0, image: player1, highlight: false, status: []},
+        { nickname: '이혜민', role: '사보타지', gold: 0, image: player2, highlight: false, status: [] },
+        { nickname: 'player3', role: '광부', gold: 0, image: player3, highlight: false, status: [] },
+        { nickname: 'player4', role: '사보타지', gold: 0, image: player4, highlight: false, status: [] },
+        { nickname: 'player5', role: '광부', gold: 0, image: player5, highlight: false, status: [] }
       ],
-
+      myNickname: '이혜민',
       turnPlayer: '이혜민',
       showGameResultPopup: false,
-
+      showGoldstoneCardDistributionPopup: false,
       cards: [
         { type: 'action', image: '/img/cards/map.png' },
         { type: 'action', subtype: 'rockfall', image: '/img/cards/rockfall.png' },
@@ -180,7 +191,18 @@ export default {
       offset: { x: 32, y: 288 },
       isDragging: false,
       dragStart: { x: 0, y: 0 },
+      distributedCards: []
     };
+  },
+  computed: {
+    myPlayer() {
+      return this.playerList.find(p => p.nickname === this.myNickname) || { gold: 0 };
+    },
+    playerNames() {
+      return this.playerList
+        .filter(p => p.role === '광부') // 광부만 선택
+        .map(p => p.nickname);
+    }
   },
   methods: {
     revealGoalCard(goalIndex) {
@@ -244,6 +266,12 @@ export default {
     },
     closeGameResultPopup() {
       this.showGameResultPopup = false;
+    },
+    openGoldstonePopup() {
+      this.showGoldstoneCardDistributionPopup = true;
+    },
+    closeGoldstoneCardDistributionPopup() {
+      this.showGoldstoneCardDistributionPopup = false;
     },
     // 카드가 드래그되었을 때
     onCardDrag(card, event) {
@@ -342,7 +370,6 @@ export default {
 
       this.draggedCard = null;
     },
-    
 
     // 맵 드래그하여 탐색할 때
     startDragging(event) {
@@ -363,6 +390,12 @@ export default {
     },
     stopDragging() {
       this.isDragging = false;
+    },
+    handleGoldConfirm(goldAmount) {
+      const me = this.playerList.find(p => p.nickname === this.myNickname);
+      if (me) {
+        me.gold += goldAmount;
+      }
     }
   }
 };

@@ -13,6 +13,8 @@
 
       <!-- 게임 종료 버튼 -->
       <button class="end-game-button" @click="endGame">게임 종료</button>
+      <!-- 금덩이 카드 분배 버튼 -->
+      <button class="distribute-goldstone-cards-button" @click="openGoldstonePopup">금덩이 분배</button>
     </div>
   </aside>
 </template>
@@ -36,6 +38,10 @@ export default {
     endGame() {
       // 게임 종료 이벤트 발생
       this.$emit('end-game');
+    },
+    openGoldstonePopup() {
+      // 금덩이 카드 분배 이벤트 발생
+      this.$emit('open-goldstone-popup');
     },
     onDrop(event) {
       const data = event.dataTransfer.getData('application/json')
@@ -118,5 +124,22 @@ export default {
 
 .end-game-button:hover {
   background-color: #c0392b;
+}
+
+.distribute-goldstone-cards-button {
+  margin-top: 30px;
+  padding: 10px 20px;
+  width: 100%;
+  background-color: #b8b47b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.distribute-goldstone-cards-button:hover {
+  background-color: #a88320;
 }
 </style>

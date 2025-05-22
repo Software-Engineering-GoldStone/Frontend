@@ -55,7 +55,10 @@ export default {
     nickname: String,
     role: String,
     turnPlayer: String,
-    gold: Number,
+    gold: {
+      type: Number,
+      default: 0
+    },
     round: Number,
     friends: Array,
     gameRecord: {
