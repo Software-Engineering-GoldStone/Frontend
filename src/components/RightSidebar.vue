@@ -2,8 +2,10 @@
   <aside class="right-sidebar">
     <div class="card-action-wrapper">
       <div class="card-action-zones">
-        <div class="zone discard-zone" @click="discardCard" @drop="onDrop"
-        @dragover.prevent>
+        <div class="zone draw-zone" @click="drawCard">
+          <img :src="drawCardImage" alt="카드 뽑기 이미지" class="zone-icon" />
+        </div>
+        <div class="zone discard-zone" @click="discardCard" @drop="onDrop" @dragover.prevent>
           <img :src="disCardImage" alt="카드 버리기 이미지" class="zone-icon" />
         </div>
       </div>
@@ -12,6 +14,21 @@
       <button class="end-game-button" @click="endGame">게임 종료</button>
       <!-- 금덩이 카드 분배 버튼 -->
       <button class="distribute-goldstone-cards-button" @click="openGoldstonePopup">금덩이 분배</button>
+
+      <!-- 30초 타이머 -->
+      <div v-if="timer > 0" class="timer">
+        남은 시간: {{ timer }}초
+      </div>
+    </div>
+
+    <!-- 타이머 종료 팝업 -->
+    <div v-if="showTimerEndPopup" class="popup-overlay">
+      <div class="popup-content">
+        <button class="close-button" @click="closeTimerEndPopup" aria-label="팝업 닫기">
+          <font-awesome-icon icon="xmark" />
+        </button>
+        <p>⏰ 다음 턴으로 넘어갑니다.</p>
+      </div>
     </div>
   </aside>
 </template>
@@ -21,33 +38,67 @@
 export default {
   data() {
     return {
-      disCardImage: '/img/ui/discard.png'
+      drawCardImage: '/img/cards/playable_back.png',
+      disCardImage: '/img/ui/discard.png',
+      timer: 0,
+      timerInterval: null,
+      showTimerEndPopup: false,
     };
   },
   methods: {
+    drawCard() {
+      this.$emit('draw-card');
+    },
     discardCard() {
       this.$emit('discard-card');
     },
     endGame() {
-      // 게임 종료 이벤트 발생
       this.$emit('end-game');
     },
     openGoldstonePopup() {
-      // 금덩이 카드 분배 이벤트 발생
       this.$emit('open-goldstone-popup');
     },
     onDrop(event) {
-      const data = event.dataTransfer.getData('application/json')
-      if (!data) return
-
+      const data = event.dataTransfer.getData('application/json');
+      if (!data) return;
       try {
-        const card = JSON.parse(data)
-        this.$emit('discard-card', card)  // 부모에게 삭제 요청
+        const card = JSON.parse(data);
+        this.$emit('discard-card', card);
       } catch (e) {
-        console.error('카드 JSON 파싱 실패:', e)
+        console.error('카드 JSON 파싱 실패:', e);
       }
+    },
+    startTimer() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+      }
+      this.timer = 30;
+      this.showTimerEndPopup = false;
+
+      this.timerInterval = setInterval(() => {
+        if (this.timer > 0) {
+          this.timer--;
+        } else {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+          this.showTimerEndPopup = true; // 타이머 종료 후 팝업 표시
+        }
+      }, 1000);
+    },
+    closeTimerEndPopup() {
+      this.showTimerEndPopup = false;
+    },
+  },
+  mounted() {
+    setTimeout(() => {
+      this.startTimer();
+    }, 3000);
+  },
+  beforeUnmount() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
     }
-  }
+  },
 };
 </script>
 
@@ -70,7 +121,7 @@ export default {
 .card-action-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* 위쪽 정렬 */
+  justify-content: flex-start;
   align-items: center;
   height: 100%;
   width: 100%;
@@ -134,5 +185,57 @@ export default {
 
 .distribute-goldstone-cards-button:hover {
   background-color: #a88320;
+}
+
+.timer {
+  margin-top: 15px;
+  font-size: 18px;
+  color: yellow;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 팝업 오버레이 */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* 팝업 내용 */
+.popup-content {
+  position: relative;
+  background-color: white;
+  padding: 25px 40px 30px 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  font-size: 20px;
+  color: #222;
+  max-width: 320px;
+  text-align: center;
+}
+
+/* 닫기 버튼 */
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #000;
 }
 </style>
