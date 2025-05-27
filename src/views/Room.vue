@@ -164,7 +164,7 @@ export default {
       showGameResultPopup: false,
       showGoldstoneCardDistributionPopup: false,
       cards: [
-        { type: 'action', image: '/img/cards/map.png' },
+        { type: 'action', subtype: 'map', image: '/img/cards/map.png' },
         { type: 'action', subtype: 'rockfall', image: '/img/cards/rockfall.png' },
         { type: 'action', subtype: 'block_cart', image: '/img/cards/block_cart.png' },
         { type: 'action', subtype: 'block_lantern', image: '/img/cards/block_lantern.png' },
@@ -252,6 +252,8 @@ export default {
 
       // 드래그 상태 초기화
       this.draggedCard = null;
+
+      this.getRandomCard();
     },
     handleDiscardCard() {
       console.log('카드 버리기');
@@ -264,18 +266,7 @@ export default {
         // 드래그 상태 초기화
         this.draggedCard = null;
 
-        // 랜덤 카드 한 장 새로 획득하는 코드 예시
-        if (this.availableCards && this.availableCards.length > 0) {
-          // availableCards 는 카드 더미 (덱)라고 가정
-          const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-          const randomCard = this.availableCards[randomIndex];
-
-          // 내 카드 배열(cards)에 추가
-          this.cards.push(randomCard);
-
-          // 덱(availableCards)에서는 제거
-          this.availableCards.splice(randomIndex, 1);
-        }
+        this.getRandomCard();
 
     },
     handleEndGame() {
@@ -315,6 +306,7 @@ export default {
           if (index !== -1) {
             this.cards.splice(index, 1);
           }
+          this.getRandomCard();
         }
       } else if (this.draggedCard && this.draggedCard.type === 'action' && this.draggedCard.subtype !== 'rockfall') {
           console.log('이 action 카드는 슬롯에 놓을 수 없습니다.');
@@ -329,18 +321,7 @@ export default {
 
           this.draggedCard = null;
 
-          // 랜덤 카드 한 장 새로 획득하는 코드 예시
-          if (this.availableCards && this.availableCards.length > 0) {
-            // availableCards 는 카드 더미 (덱)라고 가정
-            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-            const randomCard = this.availableCards[randomIndex];
-
-            // 내 카드 배열(cards)에 추가
-            this.cards.push(randomCard);
-
-            // 덱(availableCards)에서는 제거
-            this.availableCards.splice(randomIndex, 1);
-          }
+          this.getRandomCard();
       }
     },
     onDropOnPlayer(playerIndex) {
@@ -386,14 +367,7 @@ export default {
           }
         }
 
-        // 랜덤 카드 한 장 새로 획득하는 코드 예시
-        if (this.availableCards && this.availableCards.length > 0) {
-          const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-          const randomCard = this.availableCards[randomIndex];
-
-          this.cards.push(randomCard);
-          this.availableCards.splice(randomIndex, 1);
-        }
+        this.getRandomCard();
       } else {
         return; // 수리할 대상이 없으면 아무것도 하지 않음
       }
@@ -402,19 +376,7 @@ export default {
         // block 카드일 경우: 중복 없이 추가
         if (!player.status.includes(subtype)) {
           player.status.push(subtype);
-
-          // 랜덤 카드 한 장 새로 획득하는 코드 예시
-          if (this.availableCards && this.availableCards.length > 0) {
-            // availableCards 는 카드 더미 (덱)라고 가정
-            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-            const randomCard = this.availableCards[randomIndex];
-
-            // 내 카드 배열(cards)에 추가
-            this.cards.push(randomCard);
-
-            // 덱(availableCards)에서는 제거
-            this.availableCards.splice(randomIndex, 1);
-          }
+          this.getRandomCard();
         }
       }
 
@@ -451,6 +413,20 @@ export default {
       const me = this.playerList.find(p => p.nickname === this.myNickname);
       if (me) {
         me.gold += goldAmount;
+      }
+    },
+    // 랜덤 카드 한 장 새로 획득하는 코드 예시
+    getRandomCard() {
+      if (this.availableCards && this.availableCards.length > 0) {
+        // availableCards 는 카드 더미 (덱)라고 가정
+        const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+        const randomCard = this.availableCards[randomIndex];
+
+        // 내 카드 배열(cards)에 추가
+        this.cards.push(randomCard);
+
+        // 덱(availableCards)에서는 제거
+        this.availableCards.splice(randomIndex, 1);
       }
     }
   }
