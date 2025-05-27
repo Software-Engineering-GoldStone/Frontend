@@ -180,11 +180,18 @@ export default {
         
       ],
       availableCards: [   // 아직 안 가진 카드들 덱(예시)
-          { id: 1, type: 'path', name: 'path_crossroad_1', image: '/img/cards/path_crossroad_1.png' },
-          { id: 2, type: 'path', name: 'path_crossroad_2', image: '/img/cards/path_crossroad_2.png' },
-          { id: 3, type: 'path', name: 'path_crossroad_3', image: '/img/cards/path_crossroad_3.png' },
-          { id: 4, type: 'path', name: 'path_crossroad_4', image: '/img/cards/path_crossroad_4.png' },
-          { id: 5, type: 'path', name: 'path_crossroad_5', image: '/img/cards/path_crossroad_5.png' },
+          { id: 1, type: 'path', subtype: 'path_crossroad_1', image: '/img/cards/path_crossroad_1.png' },
+          { id: 2, type: 'path', subtype: 'path_crossroad_2', image: '/img/cards/path_crossroad_2.png' },
+          { id: 3, type: 'path', subtype: 'path_crossroad_3', image: '/img/cards/path_crossroad_3.png' },
+          { id: 4, type: 'path', subtype: 'path_crossroad_4', image: '/img/cards/path_crossroad_4.png' },
+          { id: 5, type: 'path', subtype: 'path_crossroad_5', image: '/img/cards/path_crossroad_5.png' },
+          { id: 6, type: 'action', subtype: 'repair_cart', image: '/img/cards/repair_cart.png' },
+          { id: 7, type: 'action', subtype: 'repair_lantern', image: '/img/cards/repair_lantern.png' },
+          { id: 8, type: 'action', subtype: 'repair_pickaxe', image: '/img/cards/repair_pickaxe.png' },
+          { id: 9, type: 'action', subtype: 'repair_cart_lantern', image: '/img/cards/repair_cart_lantern.png' },
+          { id: 10, type: 'action', subtype: 'repair_cart_pickaxe', image: '/img/cards/repair_cart_pickaxe.png' },
+          { id: 11, type: 'action', subtype: 'repair_lantern_pickaxe', image: '/img/cards/repair_lantern_pickaxe.png' }
+
       ],
       draggedCard: null,
       slots: Array(900).fill(null).map(() => ({ card: null })), // 슬롯 배열 초기화
@@ -259,16 +266,16 @@ export default {
 
         // 랜덤 카드 한 장 새로 획득하는 코드 예시
         if (this.availableCards && this.availableCards.length > 0) {
-            // availableCards 는 카드 더미 (덱)라고 가정
-            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-            const randomCard = this.availableCards[randomIndex];
+          // availableCards 는 카드 더미 (덱)라고 가정
+          const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+          const randomCard = this.availableCards[randomIndex];
 
-            // 내 카드 배열(cards)에 추가
-            this.cards.push(randomCard);
+          // 내 카드 배열(cards)에 추가
+          this.cards.push(randomCard);
 
-            // 덱(availableCards)에서는 제거
-            this.availableCards.splice(randomIndex, 1);
-          }
+          // 덱(availableCards)에서는 제거
+          this.availableCards.splice(randomIndex, 1);
+        }
 
     },
     handleEndGame() {
@@ -347,39 +354,49 @@ export default {
       // 수리/블록 카드만 처리
       const validTypes = [
         'block_cart', 'block_lantern', 'block_pickaxe',
-        'repair_cart', 'repair_lantern', 'repair_pickaxe'
+        'repair_cart', 'repair_lantern', 'repair_pickaxe',
+        'repair_cart_lantern', 'repair_cart_pickaxe', 'repair_lantern_pickaxe'
       ];
+
       if (!validTypes.includes(subtype)) return;
 
       // 수리 카드 대응 관계 설정
       const repairToBlockMap = {
-        repair_cart: 'block_cart',
-        repair_lantern: 'block_lantern',
-        repair_pickaxe: 'block_pickaxe'
+        repair_cart: ['block_cart'],
+        repair_lantern: ['block_lantern'],
+        repair_pickaxe: ['block_pickaxe'],
+        repair_cart_lantern: ['block_cart', 'block_lantern'],
+        repair_cart_pickaxe: ['block_cart', 'block_pickaxe'],
+        repair_lantern_pickaxe: ['block_lantern', 'block_pickaxe']
       };
 
       if (subtype.startsWith('repair')) {
-        const blockType = repairToBlockMap[subtype];
+        const blockTypes = repairToBlockMap[subtype];
 
-        // 플레이어가 해당 block 상태이면 제거
-        if (player.status.includes(blockType)) {
-          player.status = player.status.filter(s => s !== blockType);
+        // 플레이어가 수리 대상 block 중 하나라도 가지고 있는지 확인
+        const hasMatchingBlock = blockTypes.some(block => player.status.includes(block));
 
-          // 랜덤 카드 한 장 새로 획득하는 코드 예시
-          if (this.availableCards && this.availableCards.length > 0) {
-            // availableCards 는 카드 더미 (덱)라고 가정
-            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
-            const randomCard = this.availableCards[randomIndex];
-
-            // 내 카드 배열(cards)에 추가
-            this.cards.push(randomCard);
-
-            // 덱(availableCards)에서는 제거
-            this.availableCards.splice(randomIndex, 1);
+        if (hasMatchingBlock) {
+        // 첫 번째 일치하는 block 하나만 제거
+        const blockToRemove = blockTypes.find(block => player.status.includes(block));
+        if (blockToRemove) {
+          const index = player.status.indexOf(blockToRemove);
+          if (index !== -1) {
+            player.status.splice(index, 1);
           }
-        } else {
-          return; // 짝 안 맞으면 아무것도 안 함
         }
+
+        // 랜덤 카드 한 장 새로 획득하는 코드 예시
+        if (this.availableCards && this.availableCards.length > 0) {
+          const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+          const randomCard = this.availableCards[randomIndex];
+
+          this.cards.push(randomCard);
+          this.availableCards.splice(randomIndex, 1);
+        }
+      } else {
+        return; // 수리할 대상이 없으면 아무것도 하지 않음
+      }
 
       } else {
         // block 카드일 경우: 중복 없이 추가
