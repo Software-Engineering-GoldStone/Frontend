@@ -9,7 +9,7 @@
           class="card-box"
         >
           <img 
-            :src="card" 
+            :src="getCardImage(card)" 
             alt="Gold Card" 
             @click="selectCard(index)" 
             :class="{ selected: selectedCardIndex === index }"
@@ -37,11 +37,16 @@ export default {
   },
   data() {
     return {
-      goldCardImages: [
-        '/img/cards/gold_1.png',
-        '/img/cards/gold_2.png',
-        '/img/cards/gold_3.png'
-      ],
+      goldCardCounts: {
+        gold_1: 16,
+        gold_2: 8,
+        gold_3: 4
+      },
+      goldCardImages: {
+        gold_1: '/img/cards/gold_1.png',
+        gold_2: '/img/cards/gold_2.png',
+        gold_3: '/img/cards/gold_3.png'
+      },
       distributedCards: [],
       selectedCardIndex: null,
       earnedGold: null
@@ -52,9 +57,20 @@ export default {
       immediate: true,
       handler(newPlayers) {
         this.distributedCards = [];
+        const availableCards = [];
+
+        // card pool setting
+        for (const [type, count] of Object.entries(this.goldCardCounts)) {
+          for (let i = 0; i < count; i++) {
+            availableCards.push(type);
+          }
+        }
+
+        const shuffled = availableCards.sort(() => Math.random() - 0.5);
         for (let i = 0; i < newPlayers.length; i++) {
-          const randomIndex = Math.floor(Math.random() * this.goldCardImages.length);
-          this.distributedCards.push(this.goldCardImages[randomIndex]);
+          const cardType = shuffled[i];
+          this.distributedCards.push(cardType);
+          this.goldCardCounts[cardType]--;
         }
       }
     }
@@ -63,6 +79,7 @@ export default {
     selectCard(index) {
       this.selectedCardIndex = index;
       const selectedCard = this.distributedCards[index];
+
       if (selectedCard.includes('gold_1')) {
         this.earnedGold = 1;
       } else if (selectedCard.includes('gold_2')) {
@@ -76,6 +93,9 @@ export default {
         this.$emit('confirm-gold', this.earnedGold); // 부모로 전달
         this.$emit('close'); // 팝업도 닫기
       }
+    },
+    getCardImage(cardType) {
+      return this.goldCardImages[cardType];
     }
   }
 };
