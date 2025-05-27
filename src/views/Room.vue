@@ -90,8 +90,8 @@
 
     <!-- 오른쪽 사이드바 -->
     <RightSidebar
-      @draw-card="handleDrawCard"
-      @discard-card="handleDiscardCard"
+      @dragover.prevent
+      @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
       @open-goldstone-popup="openGoldstonePopup"
     />
@@ -246,9 +246,6 @@ export default {
       // 드래그 상태 초기화
       this.draggedCard = null;
     },
-    handleDrawCard() {
-      console.log('카드 뽑기');
-    },
     handleDiscardCard() {
       console.log('카드 버리기');
       // 카드 목록에서 드래그한 카드 하나만 제거
@@ -259,6 +256,19 @@ export default {
         
         // 드래그 상태 초기화
         this.draggedCard = null;
+
+        // 랜덤 카드 한 장 새로 획득하는 코드 예시
+        if (this.availableCards && this.availableCards.length > 0) {
+            // availableCards 는 카드 더미 (덱)라고 가정
+            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+            const randomCard = this.availableCards[randomIndex];
+
+            // 내 카드 배열(cards)에 추가
+            this.cards.push(randomCard);
+
+            // 덱(availableCards)에서는 제거
+            this.availableCards.splice(randomIndex, 1);
+          }
 
     },
     handleEndGame() {
@@ -280,6 +290,7 @@ export default {
       if (event && event.dataTransfer) {
         event.dataTransfer.setData('application/json', JSON.stringify(card));
       }  
+      
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
     onCardDrop(slotIndex) {
@@ -326,6 +337,8 @@ export default {
       }
     },
     onDropOnPlayer(playerIndex) {
+      
+
       if (!this.draggedCard || this.draggedCard.type !== 'action') return;
 
       const subtype = this.draggedCard.subtype;
@@ -351,6 +364,19 @@ export default {
         // 플레이어가 해당 block 상태이면 제거
         if (player.status.includes(blockType)) {
           player.status = player.status.filter(s => s !== blockType);
+
+          // 랜덤 카드 한 장 새로 획득하는 코드 예시
+          if (this.availableCards && this.availableCards.length > 0) {
+            // availableCards 는 카드 더미 (덱)라고 가정
+            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+            const randomCard = this.availableCards[randomIndex];
+
+            // 내 카드 배열(cards)에 추가
+            this.cards.push(randomCard);
+
+            // 덱(availableCards)에서는 제거
+            this.availableCards.splice(randomIndex, 1);
+          }
         } else {
           return; // 짝 안 맞으면 아무것도 안 함
         }
@@ -359,6 +385,19 @@ export default {
         // block 카드일 경우: 중복 없이 추가
         if (!player.status.includes(subtype)) {
           player.status.push(subtype);
+
+          // 랜덤 카드 한 장 새로 획득하는 코드 예시
+          if (this.availableCards && this.availableCards.length > 0) {
+            // availableCards 는 카드 더미 (덱)라고 가정
+            const randomIndex = Math.floor(Math.random() * this.availableCards.length);
+            const randomCard = this.availableCards[randomIndex];
+
+            // 내 카드 배열(cards)에 추가
+            this.cards.push(randomCard);
+
+            // 덱(availableCards)에서는 제거
+            this.availableCards.splice(randomIndex, 1);
+          }
         }
       }
 

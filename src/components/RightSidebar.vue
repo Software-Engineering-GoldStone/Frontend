@@ -2,9 +2,6 @@
   <aside class="right-sidebar">
     <div class="card-action-wrapper">
       <div class="card-action-zones">
-        <div class="zone draw-zone" @click="drawCard">
-          <img :src="drawCardImage" alt="카드 뽑기 이미지" class="zone-icon" />
-        </div>
         <div class="zone discard-zone" @click="discardCard" @drop="onDrop"
         @dragover.prevent>
           <img :src="disCardImage" alt="카드 버리기 이미지" class="zone-icon" />
@@ -24,14 +21,10 @@
 export default {
   data() {
     return {
-      drawCardImage: '/img/cards/playable_back.png',
       disCardImage: '/img/ui/discard.png'
     };
   },
   methods: {
-    drawCard() {
-      this.$emit('draw-card');
-    },
     discardCard() {
       this.$emit('discard-card');
     },
