@@ -24,6 +24,8 @@
 
 <script>
 import { io } from "socket.io-client";
+import axios from 'axios';
+
 
 export default {
   data() {
@@ -33,8 +35,9 @@ export default {
       birthdate: ''
     };
   },
+  /*
   created() {
-  this.socket = io('http://localhost:3000');
+  his.socket = io('http://172.17.78.133:3031');
 
   // 소켓 연결 완료 이벤트 핸들러
   this.socket.on('connect', () => {
@@ -50,8 +53,9 @@ export default {
     this.users = userList; 
   });
 
-  },
+  },*/
   methods: {
+    /*
     createRoom() {
       if (!this.nickname || !this.birthdate) {
         alert('닉네임과 생년월일을 입력해주세요.');
@@ -80,7 +84,48 @@ export default {
           });
         });
       });
+    }*/
+
+
+    async createRoom() {
+      if (!this.nickname || !this.birthdate) {
+        alert('닉네임과 생년월일을 입력해주세요.');
+        return;
+      }
+      try {
+        // 1. 유저 생성 API 호출
+        const userRes = await axios.post('http://172.17.78.133:8080/users', {
+          nickname: this.nickname,
+          birthdate: this.birthdate
+        });
+
+        console.log(userRes);
+
+        const user = userRes.data;
+        console.log('생성된 유저:', user);
+
+        const roomRes = axios.post('http://172.17.78.133:8080/game-rooms', {
+          userId: user.userId
+        });
+
+        const room = roomRes.data;
+        console.log('입장한 게임룸:', room);
+
+        // 3. 라우팅 (유저정보를 query로 넘길 수도 있고 상태 관리로 넘겨도 됨)
+        this.$router.push({
+          path: '/room',
+          query: {
+            userId: user.userId,
+            nickname: user.nickname
+          }
+        });
+
+      } catch (error) {
+        console.error('API 호출 실패:', error);
+        alert('서버 오류가 발생했습니다.');
+      }
     }
+
   }
 }
 </script>

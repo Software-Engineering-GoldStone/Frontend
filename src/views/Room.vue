@@ -188,7 +188,7 @@ export default {
 
     this.nickname = nickname;
 
-    this.socket = io('http://localhost:3000');
+    this.socket = io('http://localhost:3031');
 
     this.socket.on('connect', () => {
       this.socket.emit('joinRoom', { userId }, (room) => {
