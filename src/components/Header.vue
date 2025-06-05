@@ -11,6 +11,12 @@
       <span>현재 턴: {{ turnPlayer }}</span>
       <span>금덩이 개수: {{ gold }}</span>
       <span>라운드: {{ round }}</span>
+      <img
+          src="@/assets/infoIcon.png"
+          alt="라운드 설명"
+          class="info-icon"
+          @click="openRoundPdf"
+        />
     </div>
 
     <!-- 프로필 팝업 -->
@@ -106,6 +112,9 @@ export default {
       if (confirm('정말 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
         this.$emit('delete-account');
       }
+    },
+    openRoundPdf() {
+      window.open('/docs/roundGuide.pdf', '_blank');
     }
   }
 };
@@ -155,10 +164,6 @@ export default {
   display: inline-flex;
   align-items: center;
 }
-
-
-
-/* 헤더 내 펜 아이콘 제거했으므로 관련 스타일도 제거 */
 
 /* 게임 상태 */
 .game-status {
@@ -260,5 +265,13 @@ export default {
 
 .delete-btn:hover {
   background-color: #b71c1c;
+}
+
+.info-icon {
+  width: 25px;
+  height: 25px;
+  margin-left: 4px;
+  cursor: pointer;
+  vertical-align: middle;
 }
 </style>

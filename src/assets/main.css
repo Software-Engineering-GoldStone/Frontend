@@ -64,6 +64,22 @@ html, body {
   align-items: center;
   overflow: hidden;
 }
+.lobby-background {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 위에서부터 시작 */
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  flex: 1;
+  padding-top: 200px; /* 원하는 만큼 아래로 */
+  background-image: url('@/assets/LobbyBackground.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
 
 /* 슬롯들을 가득 채우는 컨테이너 */
 .slot-grid {

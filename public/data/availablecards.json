@@ -1,0 +1,14 @@
+[
+    { "id": 1, "type": "path", "subtype": "path_crossroad_1", "image": "/img/cards/path_crossroad_1.png" },
+    { "id": 2, "type": "path", "subtype": "path_crossroad_2", "image": "/img/cards/path_crossroad_2.png" },
+    { "id": 3, "type": "path", "subtype": "path_crossroad_3", "image": "/img/cards/path_crossroad_3.png" },
+    { "id": 4, "type": "path", "subtype": "path_crossroad_4", "image": "/img/cards/path_crossroad_4.png" },
+    { "id": 5, "type": "path", "subtype": "path_crossroad_5", "image": "/img/cards/path_crossroad_5.png" },
+    { "id": 6, "type": "action", "subtype": "repair_cart", "image": "/img/cards/repair_cart.png" },
+    { "id": 7, "type": "action", "subtype": "repair_lantern", "image": "/img/cards/repair_lantern.png" },
+    { "id": 8, "type": "action", "subtype": "repair_pickaxe", "image": "/img/cards/repair_pickaxe.png" },
+    { "id": 9, "type": "action", "subtype": "repair_cart_lantern", "image": "/img/cards/repair_cart_lantern.png" },
+    { "id": 10, "type": "action", "subtype": "repair_cart_pickaxe", "image": "/img/cards/repair_cart_pickaxe.png" },
+    { "id": 11, "type": "action", "subtype": "repair_lantern_pickaxe", "image": "/img/cards/repair_lantern_pickaxe.png" }
+
+]

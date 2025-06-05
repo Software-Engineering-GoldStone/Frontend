@@ -45,10 +45,10 @@ export default {
   },
   computed: {
     actionCards() {
-      return this.cards.filter(card => card.type === 'action');
+      return (this.cards || []).filter(card => card.type === 'action');
     },
     pathCards() {
-      return this.cards.filter(card => card.type === 'path');
+      return (this.cards || []).filter(card => card.type === 'path');
     }
   },
   methods: {

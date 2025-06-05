@@ -12,35 +12,21 @@
       </div>
       <!-- 상태 아이콘 표시 -->
       <img
-        v-if="player.status.includes('block_cart')"
+        v-if="Array.isArray(player.status) && player.status.includes('block_cart')"
         :src="blocked_icons.cart_blocked"
         class="status-icon"
       />
       <img
-        v-if="player.status.includes('block_lantern')"
+        v-if="Array.isArray(player.status) && player.status.includes('block_lantern')"
         :src="blocked_icons.lantern_blocked"
         class="status-icon"
       />
       <img
-        v-if="player.status.includes('block_pickaxe')"
+        v-if="Array.isArray(player.status) && player.status.includes('block_pickaxe')"
         :src="blocked_icons.pickaxe_blocked"
         class="status-icon"
       />
-      <img
-        v-if="player.status.includes('repair_cart')"
-        :src="blocked_icons.cart_repaired"
-        class="status-icon"
-      />
-      <img
-        v-if="player.status.includes('repair_lantern')"
-        :src="blocked_icons.lantern_repaired"
-        class="status-icon"
-      />
-      <img
-        v-if="player.status.includes('repair_pickaxe')"
-        :src="blocked_icons.pickaxe_repaired"
-        class="status-icon"
-      />
+
     </div>
   </aside>
 </template>
@@ -65,6 +51,7 @@ export default {
       },
     }
   }
+  
 };
 </script>
 

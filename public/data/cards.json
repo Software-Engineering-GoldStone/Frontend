@@ -1,0 +1,16 @@
+[
+    { "type": "action", "subtype": "map", "image": "/img/cards/map.png" },
+    { "type": "action", "subtype": "rockfall", "image": "/img/cards/rockfall.png" },
+    { "type": "action", "subtype": "block_cart", "image": "/img/cards/block_cart.png" },
+    { "type": "action", "subtype": "block_lantern", "image": "/img/cards/block_lantern.png" },
+    { "type": "action", "subtype": "block_pickaxe", "image": "/img/cards/block_pickaxe.png" },
+    { "type": "action", "subtype": "repair_cart", "image": "/img/cards/repair_cart.png" },
+    { "type": "action", "subtype": "repair_lantern", "image": "/img/cards/repair_lantern.png" },
+    { "type": "action", "subtype": "repair_pickaxe", "image": "/img/cards/repair_pickaxe.png" },
+    { "type": "path", "image": "/img/cards/path_right_1.png" },
+    { "type": "path", "image": "/img/cards/path_right_2.png" },
+    { "type": "path", "image": "/img/cards/path_right_3.png" },
+    { "type": "path", "image": "/img/cards/path_right_4.png" },
+    { "type": "path", "image": "/img/cards/path_left_1.png" }
+    
+  ]

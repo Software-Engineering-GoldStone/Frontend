@@ -2,8 +2,8 @@
   <div class="room-layout">
     <!-- 고정 헤더 -->
     <Header
-      :nickname="playerList[0].nickname"
-      :role="playerList[0].role"
+      :nickname="nickname"
+      :role="playerList.role"
       :turnPlayer="turnPlayer"
       :gold="myPlayer.gold"
       :round="round"
@@ -90,6 +90,7 @@
 
     <!-- 오른쪽 사이드바 -->
     <RightSidebar
+      :deck-empty="availableCards && availableCards.length === 0"
       @dragover.prevent
       @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
@@ -131,6 +132,8 @@ import player3 from '@/assets/player3.png';
 import player4 from '@/assets/player4.png';
 import player5 from '@/assets/player5.png';
 
+import { io } from "socket.io-client";
+
 export default {
   components: {
     Header,
@@ -142,6 +145,11 @@ export default {
   },
   data() {
     return {
+      cards: [],
+      availablecards:[],
+      playerList: [], // 사이드바용 가공된 리스트
+      users:[],       // 소켓에서 직접 받는 사용자 리스트
+      nickname:'',
       startCard: {
         image: '/img/cards/start.png'
       },
@@ -152,47 +160,10 @@ export default {
       ],
       round: 2,
       hoveredSlot: null,
-      playerList: [
-        { nickname: '강승희', role: '광부', gold: 0, image: player1, highlight: false, status: []},
-        { nickname: '이혜민', role: '사보타지', gold: 0, image: player2, highlight: false, status: [] },
-        { nickname: 'player3', role: '광부', gold: 0, image: player3, highlight: false, status: [] },
-        { nickname: 'player4', role: '사보타지', gold: 0, image: player4, highlight: false, status: [] },
-        { nickname: 'player5', role: '광부', gold: 0, image: player5, highlight: false, status: [] }
-      ],
       myNickname: '이혜민',
       turnPlayer: '이혜민',
       showGameResultPopup: false,
       showGoldstoneCardDistributionPopup: false,
-      cards: [
-        { type: 'action', subtype: 'map', image: '/img/cards/map.png' },
-        { type: 'action', subtype: 'rockfall', image: '/img/cards/rockfall.png' },
-        { type: 'action', subtype: 'block_cart', image: '/img/cards/block_cart.png' },
-        { type: 'action', subtype: 'block_lantern', image: '/img/cards/block_lantern.png' },
-        { type: 'action', subtype: 'block_pickaxe', image: '/img/cards/block_pickaxe.png' },
-        { type: 'action', subtype: 'repair_cart', image: '/img/cards/repair_cart.png' },
-        { type: 'action', subtype: 'repair_lantern', image: '/img/cards/repair_lantern.png' },
-        { type: 'action', subtype: 'repair_pickaxe', image: '/img/cards/repair_pickaxe.png' },
-        { type: 'path', image: '/img/cards/path_right_1.png' },
-        { type: 'path', image: '/img/cards/path_right_2.png' },
-        { type: 'path', image: '/img/cards/path_right_3.png' },
-        { type: 'path', image: '/img/cards/path_right_4.png' },
-        { type: 'path', image: '/img/cards/path_left_1.png' },
-        
-      ],
-      availableCards: [   // 아직 안 가진 카드들 덱(예시)
-          { id: 1, type: 'path', subtype: 'path_crossroad_1', image: '/img/cards/path_crossroad_1.png' },
-          { id: 2, type: 'path', subtype: 'path_crossroad_2', image: '/img/cards/path_crossroad_2.png' },
-          { id: 3, type: 'path', subtype: 'path_crossroad_3', image: '/img/cards/path_crossroad_3.png' },
-          { id: 4, type: 'path', subtype: 'path_crossroad_4', image: '/img/cards/path_crossroad_4.png' },
-          { id: 5, type: 'path', subtype: 'path_crossroad_5', image: '/img/cards/path_crossroad_5.png' },
-          { id: 6, type: 'action', subtype: 'repair_cart', image: '/img/cards/repair_cart.png' },
-          { id: 7, type: 'action', subtype: 'repair_lantern', image: '/img/cards/repair_lantern.png' },
-          { id: 8, type: 'action', subtype: 'repair_pickaxe', image: '/img/cards/repair_pickaxe.png' },
-          { id: 9, type: 'action', subtype: 'repair_cart_lantern', image: '/img/cards/repair_cart_lantern.png' },
-          { id: 10, type: 'action', subtype: 'repair_cart_pickaxe', image: '/img/cards/repair_cart_pickaxe.png' },
-          { id: 11, type: 'action', subtype: 'repair_lantern_pickaxe', image: '/img/cards/repair_lantern_pickaxe.png' }
-
-      ],
       draggedCard: null,
       slots: Array(900).fill(null).map(() => ({ card: null })), // 슬롯 배열 초기화
       offset: { x: 32, y: 288 },
@@ -200,6 +171,69 @@ export default {
       dragStart: { x: 0, y: 0 },
       distributedCards: []
     };
+  },
+  mounted(){
+    //cards.json과 availablecards.json 파일 로드
+    Promise.all([
+      fetch('/data/cards.json').then(res => res.json()),
+      fetch('/data/availablecards.json').then(res => res.json())
+    ]).then(([cards, availablecards]) => {
+      this.cards = cards;
+      this.availableCards = availablecards;
+    });
+
+    const roomId = this.$route.query.roomId;
+    const userId = this.$route.query.userId;
+    const nickname = this.$route.query.nickname;
+
+    this.nickname = nickname;
+
+    this.socket = io('http://localhost:3000');
+
+    this.socket.on('connect', () => {
+      this.socket.emit('joinRoom', { userId }, (room) => {
+        console.log('Joined room:', room);
+      });
+    });
+
+    this.socket.on('userList', (userList) => {
+      console.log('Room.vue 유저 리스트:', userList);
+      this.users = userList;
+    });
+
+    //joinRoom emit 등 추가예정
+
+    const roles = ['광부', '사보타지', '광부', '사보타지', '광부'];
+    const images = [player1, player2, player3, player4, player5];
+
+    return this.users.map((user, index) => ({
+      nickname: user.nickname,
+      role: roles[index] || '광부',
+      gold: 0,
+      image: images[index] || player1,
+      highlight: false,
+      status: [],
+      }));
+  
+  },
+  watch: {
+    users: {
+      handler(newUsers) {
+        const roles = ['광부', '사보타지', '광부', '사보타지', '광부'];
+        const images = [player1, player2, player3, player4, player5];
+
+        this.playerList = newUsers.map((user, index) => ({
+          nickname: user.nickname,
+          role: roles[index] || '광부',
+          gold: 0,
+          image: images[index] || player1,
+          highlight: false,
+          status: []
+        }));
+      },
+      immediate: true,
+      deep: true
+    }
   },
   computed: {
     myPlayer() {
@@ -210,6 +244,7 @@ export default {
         .filter(p => p.role === '광부') // 광부만 선택
         .map(p => p.nickname);
     }
+    
   },
   methods: {
     revealGoalCard(goalIndex) {
@@ -244,29 +279,13 @@ export default {
         this.goalCards[goalIndex].image = '/img/cards/goal_back.png';
       }, 2000);
 
-      // map 카드는 카드 목록에서 제거
-      const index = this.cards.indexOf(this.draggedCard);
-      if (index !== -1) {
-        this.cards.splice(index, 1);
-      }
-
-      // 드래그 상태 초기화
-      this.draggedCard = null;
-
+      this.removeDraggedCard();
       this.getRandomCard();
     },
     handleDiscardCard() {
       console.log('카드 버리기');
-      // 카드 목록에서 드래그한 카드 하나만 제거
-      const index = this.cards.indexOf(this.draggedCard);
-        if (index !== -1) {
-          this.cards.splice(index, 1);
-        }
-        
-        // 드래그 상태 초기화
-        this.draggedCard = null;
-
-        this.getRandomCard();
+      this.removeDraggedCard();
+      this.getRandomCard();
 
     },
     handleEndGame() {
@@ -301,11 +320,7 @@ export default {
             // 기존 슬롯 카드 삭제
           this.slots[slotIndex].card = null;
 
-          // rockfall 카드도 카드 목록에서 삭제
-          const index = this.cards.indexOf(this.draggedCard);
-          if (index !== -1) {
-            this.cards.splice(index, 1);
-          }
+          this.removeDraggedCard();
           this.getRandomCard();
         }
       } else if (this.draggedCard && this.draggedCard.type === 'action' && this.draggedCard.subtype !== 'rockfall') {
@@ -314,18 +329,12 @@ export default {
       } else {
           this.slots[slotIndex].card = this.draggedCard;
 
-          const index = this.cards.indexOf(this.draggedCard);
-          if (index !== -1) {
-            this.cards.splice(index, 1);
-          }
-
-          this.draggedCard = null;
-
+          this.removeDraggedCard();
           this.getRandomCard();
       }
     },
+    //player에게 행동카드 사용할 때
     onDropOnPlayer(playerIndex) {
-      
 
       if (!this.draggedCard || this.draggedCard.type !== 'action') return;
 
@@ -367,26 +376,22 @@ export default {
           }
         }
 
-        this.getRandomCard();
-      } else {
-        return; // 수리할 대상이 없으면 아무것도 하지 않음
-      }
+          this.getRandomCard();
+        } else {
+          return; // 수리할 대상이 없으면 아무것도 하지 않음
+        }
 
       } else {
         // block 카드일 경우: 중복 없이 추가
         if (!player.status.includes(subtype)) {
-          player.status.push(subtype);
+          const updatedStatus = [...player.status, subtype];
+          const updatedPlayer = { ...player, status: updatedStatus };
+          this.playerList[playerIndex] = updatedPlayer;this.playerList[playerIndex].status = updatedStatus;
           this.getRandomCard();
         }
       }
 
-      // 드래그한 카드 제거
-      const cardIdx = this.cards.indexOf(this.draggedCard);
-      if (cardIdx !== -1) {
-        this.cards.splice(cardIdx, 1);
-      }
-
-      this.draggedCard = null;
+      this.removeDraggedCard();
     },
 
     // 맵 드래그하여 탐색할 때
@@ -415,10 +420,10 @@ export default {
         me.gold += goldAmount;
       }
     },
-    // 랜덤 카드 한 장 새로 획득하는 코드 예시
+    // 랜덤 카드 한 장 새로 획득
     getRandomCard() {
       if (this.availableCards && this.availableCards.length > 0) {
-        // availableCards 는 카드 더미 (덱)라고 가정
+        // availableCards 는 카드 더미 (덱)
         const randomIndex = Math.floor(Math.random() * this.availableCards.length);
         const randomCard = this.availableCards[randomIndex];
 
@@ -427,7 +432,17 @@ export default {
 
         // 덱(availableCards)에서는 제거
         this.availableCards.splice(randomIndex, 1);
+
       }
+    },
+    removeDraggedCard(){
+      const index = this.cards.indexOf(this.draggedCard);
+      if (index !== -1) {
+        this.cards.splice(index, 1);
+      }
+
+      // 드래그 상태 초기화
+      this.draggedCard = null;
     }
   }
 };
