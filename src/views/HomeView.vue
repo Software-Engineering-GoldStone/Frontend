@@ -35,9 +35,9 @@ export default {
       birthdate: ''
     };
   },
-  /*
+
   created() {
-  his.socket = io('http://172.17.78.133:3031');
+  this.socket = io('ws://172.17.78.133:3031', {transports: ['websocket'], reconnection: false});
 
   // 소켓 연결 완료 이벤트 핸들러
   this.socket.on('connect', () => {
@@ -45,17 +45,17 @@ export default {
   });
 
   this.socket.on('connect_error', (err) => {
-    console.error('Socket connection error:', err);
+    console.error('Socket connection error in homeview.vue:', err);
   });
-
+/*
   this.socket.on('userList', (userList) => {
     console.log('소켓으로 받은 유저 리스트:', userList);
     this.users = userList; 
   });
-
-  },*/
+*/
+  },
   methods: {
-    /*
+   /*
     createRoom() {
       if (!this.nickname || !this.birthdate) {
         alert('닉네임과 생년월일을 입력해주세요.');
@@ -84,9 +84,8 @@ export default {
           });
         });
       });
-    }*/
-
-
+    }
+ */
     async createRoom() {
       if (!this.nickname || !this.birthdate) {
         alert('닉네임과 생년월일을 입력해주세요.');
@@ -104,20 +103,19 @@ export default {
         const user = userRes.data;
         console.log('생성된 유저:', user);
 
-        const roomRes = axios.post('http://172.17.78.133:8080/game-rooms', {
-          userId: user.userId
-        });
+        // 2. 게임방 입장 요청
+        this.socket.emit('joinGameRoom', { userId: user.userId }, (room) => {
+          console.log('입장한 게임룸:', room);
 
-        const room = roomRes.data;
-        console.log('입장한 게임룸:', room);
-
-        // 3. 라우팅 (유저정보를 query로 넘길 수도 있고 상태 관리로 넘겨도 됨)
-        this.$router.push({
-          path: '/room',
-          query: {
-            userId: user.userId,
-            nickname: user.nickname
-          }
+          // 3. 라우팅
+          this.$router.push({
+            path: '/room', //Room.vue 로 이동
+            query: {
+              roomId: room.roomId,
+              userId: user.userId,
+              nickname: user.nickname
+            }
+          });
         });
 
       } catch (error) {
@@ -125,7 +123,6 @@ export default {
         alert('서버 오류가 발생했습니다.');
       }
     }
-
   }
 }
 </script>

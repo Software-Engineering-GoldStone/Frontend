@@ -17,7 +17,16 @@ axios.defaults.baseURL = 'http://172.17.78.133:8080'
 
 // socket.io-client import 및 소켓 생성(백엔드와 실시간 연결)
 import { io, Socket } from 'socket.io-client'
-const socket: Socket = io('http://172.17.78.133:3031')
+const socket: Socket = io('ws://172.17.78.133:3031', {transports: ['websocket'], reconnection: false})
+
+// 소켓 연결 완료 이벤트 핸들러
+socket.on('connect', () => {
+    console.log('Socket connected with id:', socket.id);
+});
+
+socket.on('connect_error', (err) => {
+    console.error('Socket connection error in main.ts:', err);
+});
 
 // 아이콘 라이브러리에 추가
 library.add(faPenToSquare, faXmark)
