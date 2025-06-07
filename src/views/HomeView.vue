@@ -14,8 +14,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   data() {
     return {
@@ -27,8 +25,6 @@ export default {
   created() {
     // 소켓 연결 완료 이벤트 핸들러
     this.$socket.on('gameRoomJoined', (room) => {
-      console.log('게임방에 입장:', room)
-
       // 라우팅
       this.$router.push({
         path: '/room', //Room.vue 로 이동
@@ -48,7 +44,7 @@ export default {
       }
       try {
         // 1. 유저 생성 API 호출
-        const userRes = await axios.post('http://172.17.78.133:8080/users', {
+        const userRes = await this.$axios.post('/users', {
           nickname: this.nickname,
           birthdate: this.birthdate,
         })
