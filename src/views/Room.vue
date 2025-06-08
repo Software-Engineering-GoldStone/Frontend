@@ -259,7 +259,6 @@ export default {
 
         if (response.status === 200 && response.data.success === "true") {
           console.log("카드 버리기 성공:", response.data.message);
-
           this.removeDraggedCard(); // 로컬 카드 목록에서 제거
           this.getRandomCard();     // 새 카드 지급 로직 (필요하다면)
         } else {
@@ -314,7 +313,7 @@ export default {
       else { this.onCardDrop(slot.x, slot.y); }
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
-    onCardDrop(x, y) {
+    async onCardDrop(x, y) {
       if (!this.draggedCard) return;
 
       // 좌표에 해당하는 슬롯 찾기
@@ -322,13 +321,30 @@ export default {
 
       // 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
       if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
+        if (!slntnow.card) return;
+        try {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/use-action-card`, {
+            userId: this.userId,
+            cardId: this.draggedCard.id,
+            cardType: 'ACTION',
+            actionCardType: 'ROCKFALL',
+            roomId: this.gameRoomId,
+            targetCellX: x - 13,
+            targetCellY: 17 - y
+          });
 
-        if (slotnow.card) {
-          // 기존 슬롯 카드 삭제
-          slotnow.card = null;
-          this.removeDraggedCard();
-          this.getRandomCard();
+          if (response.status === 200 && response.data.success === 'true') {
+            slotnow.card = null;
+            this.removeDraggedCard();
+            this.getRandomCard();
+            console.log("낙석 카드 사용 성공: ", response.data.message);
+          } else {
+            console.warn("낙석 카드 사용 실패: ", response.data.message);
+          }
+        } catch (error) {
+          console.error("낙석 카드 요청 실패: ", error);
         }
+        return;
       } else if (
         this.draggedCard &&
         this.draggedCard.type === 'action' &&
