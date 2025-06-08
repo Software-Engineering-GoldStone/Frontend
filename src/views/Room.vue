@@ -28,46 +28,23 @@
         >
           <!-- 슬롯들이 유동적으로 꽉 차게 배치됨 -->
           <div class="slot-grid">
-            <!-- 출발지 카드 전용 wrapper -->
-            <div class="start-wrapper">
-              <!-- 출발지 카드 (고정) -->
-              <div class="drop-slot start-card">
-                <img :src="startCard.image" alt="Start Card" class="dropped-card" />
-              </div>
-            </div>
-            <!-- 목표 카드 1 (1행 8열) -->
-            <div class="goal-wrapper goal-1" @dragover.prevent @drop.prevent="revealGoalCard(0)">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[0].image" alt="Goal Card 1" class="dropped-card" />
-              </div>
-            </div>
-
-            <!-- 목표 카드 2 -->
-            <div class="goal-wrapper goal-2" @dragover.prevent @drop.prevent="revealGoalCard(1)">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[1].image" alt="Goal Card 2" class="dropped-card" />
-              </div>
-            </div>
-
-            <!-- 목표 카드 3 -->
-            <div class="goal-wrapper goal-3" @dragover.prevent @drop.prevent="revealGoalCard(2)">
-              <div class="drop-slot goal-card">
-                <img :src="goalCards[2].image" alt="Goal Card 3" class="dropped-card" />
-              </div>
-            </div>
-
             <div
               v-for="(slot, index) in slots"
               :key="index"
               class="drop-slot"
+              @click="logSlotCoordinates(slot)"
               @mouseenter="hoveredSlot = index"
               @mouseleave="hoveredSlot = null"
               :class="{ hovered: hoveredSlot === index }"
               @dragover.prevent
-              @drop.prevent="onCardDrop(index)"
+              @drop.prevent="handleDrop(slot)"
             >
-              <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
-              <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
+            <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
+            <img v-if="slot.x === 13 && slot.y === 15" :src="startCard.image" alt="start" class="dropped-card" />
+            <img v-if="slot.x === 21 && slot.y === 13" :src="goalCards[0].image" alt="goal 1" class="dropped-card" />
+            <img v-if="slot.x === 21 && slot.y === 15" :src="goalCards[1].image" alt="goal 2" class="dropped-card" />
+            <img v-if="slot.x === 21 && slot.y === 17" :src="goalCards[2].image" alt="goal 3" class="dropped-card" />
+            <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
             </div>
           </div>
         </div>
@@ -156,10 +133,12 @@ export default {
       showGameResultPopup: false,
       showGoldstoneCardDistributionPopup: false,
       draggedCard: null,
-      slots: Array(900)
-        .fill(null)
-        .map(() => ({ card: null })), // 슬롯 배열 초기화
-      offset: { x: 32, y: 288 },
+      slots: Array.from({ length: 900 }, (_, index) => ({
+        x: index % 30,
+        y: Math.floor(index / 30),
+        card: null
+      })),
+      offset: { x: -256, y: -128 },
       isDragging: false,
       dragStart: { x: 0, y: 0 },
       distributedCards: [],
@@ -295,18 +274,45 @@ export default {
         event.dataTransfer.setData('application/json', JSON.stringify(card))
       }
     },
+    // 백엔드 좌표와 매치
+    getGridStyle(x, y) {
+      return {
+        gridColumn: `${13 + x} / span 1`,
+        gridRow: `${17 - y} / span 1`
+      };
+    },
+    // 디버깅
+    logSlotCoordinates(slot) {
+      console.log(`🟦 Slot clicked at: (${slot.x}, ${slot.y})`);
+    },
+    // 카드별
+    handleDrop(slot) {
+      // 출발지 카드의 경우
+      if (slot.x === 13 && slot.y === 15) return;
+
+      // 목적지 카드의 경우
+      if (slot.x === 21 && slot.y === 13) { this.revealGoalCard(0); }
+      else if (slot.x === 21 && slot.y === 15) { this.revealGoalCard(1); }
+      else if (slot.x === 21 && slot.y === 17) { this.revealGoalCard(2); }
+
+      // 일반 슬롯의 경우
+      else { this.onCardDrop(slot.x, slot.y); }
+    },
     // 카드가 드롭되었을 때 슬롯에 넣기
-    onCardDrop(slotIndex) {
-      if (!this.draggedCard) return
+    onCardDrop(x, y) {
+      if (!this.draggedCard) return;
+
+      // 좌표에 해당하는 슬롯 찾기
+      const slotnow = this.slots.find(s => s.x === x && s.y === y);
 
       // 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
       if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
-        if (this.slots[slotIndex].card) {
-          // 기존 슬롯 카드 삭제
-          this.slots[slotIndex].card = null
 
-          this.removeDraggedCard()
-          this.getRandomCard()
+        if (slotnow.card) {
+          // 기존 슬롯 카드 삭제
+          slotnow.card = null;
+          this.removeDraggedCard();
+          this.getRandomCard();
         }
       } else if (
         this.draggedCard &&
@@ -316,10 +322,9 @@ export default {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
         return
       } else {
-        this.slots[slotIndex].card = this.draggedCard
-
-        this.removeDraggedCard()
-        this.getRandomCard()
+          slotnow.card = this.draggedCard;
+          this.removeDraggedCard();
+          this.getRandomCard();
       }
     },
     //player에게 행동카드 사용할 때
@@ -401,9 +406,9 @@ export default {
       const newX = event.clientX - this.dragStart.x
       const newY = event.clientY - this.dragStart.y
       this.offset = {
-        x: Math.max(-900, Math.min(900, newX)),
-        y: Math.max(-1440, Math.min(1440, newY)),
-      }
+        x: Math.max(-960, Math.min(720, newX)),
+        y: Math.max(-1680, Math.min(1440, newY))
+      };
     },
     stopDragging() {
       this.isDragging = false

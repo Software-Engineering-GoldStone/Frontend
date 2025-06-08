@@ -141,26 +141,29 @@ html, body {
 }
 
 /* 출발지 카드 위치 조정용 wrapper */
-.start-wrapper {
-  grid-column: 10 / span 1; /* 중앙에서 살짝 왼쪽 (5~6칸 중 하나) */
-  grid-row: 13 / span 1;
+.start-card {
+  grid-column: 13 / span 1; /* 중앙에서 살짝 왼쪽 (5~6칸 중 하나) */
+  grid-row: 15 / span 1;
   z-index: 10;
 }
 
 /* 목표 카드 1: 1행 8열 */
 .goal-1 {
-  grid-column: 18 / span 1;
-  grid-row: 11 / span 1;
+  grid-column: 21 / span 1;
+  grid-row: 13 / span 1;
+  z-index: 10;
 }
 
 /* 목표 카드 2: 3행 8열 */
 .goal-2 {
-  grid-column: 18 / span 1;
-  grid-row: 13 / span 1;
+  grid-column: 21 / span 1;
+  grid-row: 15 / span 1;
+  z-index: 10;
 }
 
 /* 목표 카드 3: 5행 8열 */
 .goal-3 {
-  grid-column: 18 / span 1;
-  grid-row: 15 / span 1;
+  grid-column: 21 / span 1;
+  grid-row: 17 / span 1;
+  z-index: 10;
 }
