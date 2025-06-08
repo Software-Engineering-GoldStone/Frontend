@@ -22,16 +22,12 @@ export default {
     }
   },
 
-  created() {
-    // 소켓 연결 완료 이벤트 핸들러
+  mounted() {
     this.$socket.on('gameRoomJoined', (room) => {
-      // 라우팅
       this.$router.push({
         path: '/room', //Room.vue 로 이동
         query: {
-          roomId: room.id,
-          userId: this.$user.id,
-          nickname: this.$user.nickname,
+          roomId: room.gameRoomId,
         },
       })
     })
@@ -48,6 +44,8 @@ export default {
           nickname: this.nickname,
           birthdate: this.birthdate,
         })
+
+        localStorage.setItem('user', JSON.stringify(userRes.data))
 
         this.$user = userRes.data
 

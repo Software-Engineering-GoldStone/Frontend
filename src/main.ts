@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 //기본 요청 주소 설정
 import axios from 'axios'
-axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL
+axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
 // socket.io-client import 및 소켓 생성(백엔드와 실시간 연결)
 import { io, Socket } from 'socket.io-client'
