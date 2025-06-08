@@ -249,10 +249,25 @@ export default {
       this.removeDraggedCard()
       this.getRandomCard()
     },
-    handleDiscardCard() {
-      console.log('카드 버리기')
-      this.removeDraggedCard()
-      this.getRandomCard()
+    async handleDiscardCard() {
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/discard`, {
+          userId: this.userId,
+          gameRoomId: this.gameRoomId,
+          cardId: this.draggedCard.id,
+        });
+
+        if (response.status === 200 && response.data.success === "true") {
+          console.log("카드 버리기 성공:", response.data.message);
+
+          this.removeDraggedCard(); // 로컬 카드 목록에서 제거
+          this.getRandomCard();     // 새 카드 지급 로직 (필요하다면)
+        } else {
+          console.error("카드 버리기 실패:", response.data.message);
+        }
+      } catch (error) {
+        console.error("카드 버리기 요청 실패:", error);
+      }
     },
     handleEndGame() {
       this.showGameResultPopup = true
