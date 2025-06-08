@@ -3,16 +3,8 @@
     <div class="card-action-wrapper">
       <div class="card-action-zones">
         <!-- deckEmpty가 false일 때만 draw-zone 표시 -->
-        <div
-          v-if="!deckEmpty"
-          class="zone draw-zone"
-          @click="drawCard"
-        >
-          <img
-            :src="drawCardImage"
-            alt="카드 뽑기 이미지"
-            class="zone-icon"
-          />
+        <div v-if="!deckEmpty" class="zone draw-zone" @click="drawCard">
+          <img :src="drawCardImage" alt="카드 뽑기 이미지" class="zone-icon" />
         </div>
         <div class="zone discard-zone" @click="discardCard" @drop="onDrop" @dragover.prevent>
           <img :src="disCardImage" alt="카드 버리기 이미지" class="zone-icon" />
@@ -22,17 +14,15 @@
       <!-- 게임 종료 버튼 -->
       <button class="end-game-button" @click="endGame">게임 종료</button>
       <!-- 금덩이 카드 분배 버튼 -->
-      <button class="distribute-goldstone-cards-button" @click="openGoldstonePopup">금덩이 분배</button>
+      <button class="distribute-goldstone-cards-button" @click="openGoldstonePopup">
+        금덩이 분배
+      </button>
       <!-- 게임 시작 버튼: userId 와 hostPlayerId 가 같을 때만 보임 -->
-      <button
-        v-if="userId === hostPlayerId"
-        class="start-game-button"
-        @click="startGame"
-      >게임 시작</button>
+      <button v-if="userId === hostPlayerId" class="start-game-button" @click="startGame">
+        게임 시작
+      </button>
       <!-- 30초 타이머 -->
-      <div v-if="timer > 0" class="timer">
-        남은 시간: {{ timer }}초
-      </div>
+      <div v-if="timer > 0" class="timer">남은 시간: {{ timer }}초</div>
     </div>
 
     <!-- 타이머 종료 팝업 -->
@@ -48,23 +38,21 @@
 </template>
 
 <script>
-
 export default {
   props: {
-    userId: String,
     hostPlayerId: String,
     deckEmpty: {
       type: Boolean,
-      required: true
+      required: true,
     },
     userId: {
       type: String,
-      required: true
+      required: true,
     },
     gameRoomId: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -73,77 +61,71 @@ export default {
       timer: 0,
       timerInterval: null,
       showTimerEndPopup: false,
-    };
+    }
   },
   methods: {
     drawCard() {
-      this.$emit('draw-card');
+      this.$emit('draw-card')
     },
     discardCard() {
-      this.$emit('discard-card');
+      this.$emit('discard-card')
     },
     startGame() {
-      console.log('userId:', this.userId);
-      console.log('gameRoomId:', this.gameRoomId);
-
       const payload = {
         userId: this.userId,
-        gameRoomId: this.gameRoomId
-      };
+        gameRoomId: this.gameRoomId,
+      }
 
-      console.log('게임 시작 emit payload:', payload);  // 콘솔에 출력
-
-      this.$socket.emit('startGame', payload);
+      this.$socket.emit('startGame', payload)
     },
-
     endGame() {
-      this.$emit('end-game');
+      this.$emit('end-game')
     },
     openGoldstonePopup() {
-      this.$emit('open-goldstone-popup');
+      this.$emit('open-goldstone-popup')
     },
     onDrop(event) {
-      const data = event.dataTransfer.getData('application/json');
-      if (!data) return;
+      const data = event.dataTransfer.getData('application/json')
+      if (!data) return
       try {
-        const card = JSON.parse(data);
-        this.$emit('discard-card', card);
+        const card = JSON.parse(data)
+        this.$emit('discard-card', card)
       } catch (e) {
-        console.error('카드 JSON 파싱 실패:', e);
+        console.error('카드 JSON 파싱 실패:', e)
       }
     },
     startTimer() {
       if (this.timerInterval) {
-        clearInterval(this.timerInterval);
+        clearInterval(this.timerInterval)
       }
-      this.timer = 30;
-      this.showTimerEndPopup = false;
+      this.timer = 30
+      this.showTimerEndPopup = false
 
       this.timerInterval = setInterval(() => {
         if (this.timer > 0) {
-          this.timer--;
+          this.timer--
         } else {
-          clearInterval(this.timerInterval);
-          this.timerInterval = null;
-          this.showTimerEndPopup = true; // 타이머 종료 후 팝업 표시
+          clearInterval(this.timerInterval)
+          this.timerInterval = null
+          this.showTimerEndPopup = true // 타이머 종료 후 팝업 표시
         }
-      }, 1000);
+      }, 1000)
     },
     closeTimerEndPopup() {
-      this.showTimerEndPopup = false;
+      this.showTimerEndPopup = false
     },
   },
   mounted() {
     setTimeout(() => {
-      this.startTimer();
-    }, 3000);
+      this.startTimer()
+    }, 3000)
   },
   beforeUnmount() {
     if (this.timerInterval) {
-      clearInterval(this.timerInterval);
+      clearInterval(this.timerInterval)
     }
   },
-};
+}
 </script>
 
 <style scoped>
@@ -210,11 +192,9 @@ export default {
   transition: background-color 0.2s ease;
 }
 
-
 .end-game-button:hover {
   background-color: #c0392b;
 }
-
 
 /* 게임 종료 버튼 */
 .start-game-button {
@@ -229,7 +209,6 @@ export default {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
 
 .start-game-button:hover {
   background-color: #6a2660;
@@ -267,7 +246,7 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -280,7 +259,7 @@ export default {
   background-color: white;
   padding: 25px 40px 30px 30px;
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   font-size: 20px;
   color: #222;
   max-width: 320px;

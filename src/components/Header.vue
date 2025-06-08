@@ -5,18 +5,13 @@
         닉네임: {{ nickname }}
         <!-- 헤더 내 펜 아이콘 제거 -->
       </span>
-      <span>역할: {{ role }}</span>
+      <span>역할: {{ role === 'MINER' ? '광부' : '사보타지' }}</span>
     </div>
     <div class="game-status">
       <span>현재 턴: {{ turnPlayer }}</span>
       <span>금덩이 개수: {{ gold }}</span>
       <span>라운드: {{ round }}</span>
-      <img
-          src="@/assets/infoIcon.png"
-          alt="라운드 설명"
-          class="info-icon"
-          @click="openRoundPdf"
-        />
+      <img src="@/assets/infoIcon.png" alt="라운드 설명" class="info-icon" @click="openRoundPdf" />
     </div>
 
     <!-- 프로필 팝업 -->
@@ -29,9 +24,9 @@
         <h3>프로필</h3>
         <p class="profile-nickname">
           <strong>닉네임:</strong> {{ nickname }}
-          <font-awesome-icon 
-            icon="pen-to-square" 
-            class="edit-icon-inline" 
+          <font-awesome-icon
+            icon="pen-to-square"
+            class="edit-icon-inline"
             @click="editNickname"
             title="닉네임 수정"
           />
@@ -52,8 +47,8 @@
 </template>
 
 <script>
-import { nextTick } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { nextTick } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 export default {
   components: { FontAwesomeIcon },
@@ -63,61 +58,61 @@ export default {
     turnPlayer: String,
     gold: {
       type: Number,
-      default: 0
+      default: 0,
     },
     round: Number,
     friends: Array,
     gameRecord: {
       type: Object,
-      default: () => ({ win: 0, lose: 0 })
-    }
+      default: () => ({ win: 0, lose: 0 }),
+    },
   },
   data() {
     return {
       showProfile: false,
-      popupStyle: {}
-    };
+      popupStyle: {},
+    }
   },
   computed: {
     filteredFriends() {
-      return this.friends.filter(friend => friend !== this.nickname);
-    }
+      return this.friends.filter((friend) => friend !== this.nickname)
+    },
   },
   methods: {
     toggleProfile() {
-      this.showProfile = !this.showProfile;
+      this.showProfile = !this.showProfile
       if (this.showProfile) {
-        nextTick(() => this.setPosition());
+        nextTick(() => this.setPosition())
       }
     },
     setPosition() {
-      const nicknameEl = this.$refs.nicknameEl;
+      const nicknameEl = this.$refs.nicknameEl
       if (nicknameEl) {
-        const rect = nicknameEl.getBoundingClientRect();
+        const rect = nicknameEl.getBoundingClientRect()
         this.popupStyle = {
           position: 'fixed',
           top: `${rect.bottom + 5}px`,
           left: `${rect.left}px`,
-          zIndex: 100
-        };
+          zIndex: 100,
+        }
       }
     },
     editNickname() {
-      const newName = prompt('새 닉네임을 입력하세요', this.nickname);
+      const newName = prompt('새 닉네임을 입력하세요', this.nickname)
       if (newName && newName.trim() !== '') {
-        this.$emit('update:nickname', newName.trim());
+        this.$emit('update:nickname', newName.trim())
       }
     },
     deleteAccount() {
       if (confirm('정말 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-        this.$emit('delete-account');
+        this.$emit('delete-account')
       }
     },
     openRoundPdf() {
-      window.open('/docs/roundGuide.pdf', '_blank');
-    }
-  }
-};
+      window.open('/docs/roundGuide.pdf', '_blank')
+    },
+  },
+}
 </script>
 
 <style scoped>
@@ -140,16 +135,16 @@ export default {
 .player-info {
   display: flex;
   align-items: center;
-  flex: 1;               /* 추가: 공간 균등 분배 */
-  gap: 15px;             /* 가독성 향상 */
+  flex: 1; /* 추가: 공간 균등 분배 */
+  gap: 15px; /* 가독성 향상 */
 }
 
 .game-status {
   display: flex;
   align-items: center;
   justify-content: flex-end; /* 오른쪽 정렬 */
-  flex: 1;                   /* 추가: 공간 균등 분배 */
-  gap: 15px;                 /* 가독성 향상 */
+  flex: 1; /* 추가: 공간 균등 분배 */
+  gap: 15px; /* 가독성 향상 */
 }
 
 .player-info span,
@@ -179,7 +174,7 @@ export default {
   border-radius: 8px;
   padding: 20px;
   width: 300px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   color: white;
   position: fixed;
 }
