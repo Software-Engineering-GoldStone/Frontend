@@ -118,6 +118,7 @@ export default {
       playerList: [], // 사이드바용 가공된 리스트
       users: [], // 소켓에서 직접 받는 사용자 리스트
       nickname: '',
+      cellInfo: [],
       startCard: {
         image: '/img/cards/start.png',
       },
@@ -215,6 +216,23 @@ export default {
     },
   },
   methods: {
+    getBoardState() {
+      const payload = {
+        gameRoomId: this.gameRoomId
+      };
+      console.log("getBoardState() payload: ", payload);
+
+      this.$socket.emit('getBoardInfo', payload, (response) => {
+        console.log("callback of getBoardState(): ", response);
+
+        if (response && response.cellInfo) {
+          this.cellInfo = response.cellInfo;
+        } else {
+          console.warn('Invalid cellInfo response: ', response);
+        }
+      });
+    }
+
     revealGoalCard(goalIndex) {
       // 드래그된 카드가 map 카드일 때만 실행
       if (!this.draggedCard || this.draggedCard.image !== '/img/cards/map.png') {
@@ -229,13 +247,18 @@ export default {
         return
       }
 
-      // 랜덤하게 goal_gold / goal_rock_1 / goal_rock_2 중 하나 선택
       const goalImages = [
         '/img/cards/goal_gold.png',
         '/img/cards/goal_rock_1.png',
         '/img/cards/goal_rock_2.png',
-      ]
-      const randomIndex = Math.floor(Math.random() * goalImages.length)
+      ];
+      const goalPos = [
+        { x: 21, y: 13 },
+        { x: 21, y: 15 },
+        { x: 21, y: 17}
+      ];
+      const { x, y } = 
+      // const randomIndex = Math.floor(Math.random() * goalImages.length)
 
       const selectedImage = goalImages[randomIndex]
 
@@ -258,6 +281,7 @@ export default {
       };
 
       this.$socket.emit('discardCard', payload, (response) => {
+        console.log("payload: ", payload);
         if (response.success === 'true') {
           console.log("카드 버리기 성공: ", response.message);
 
@@ -333,6 +357,7 @@ export default {
         if (!slntnow.card) return;
 
         this.$socket.emit('useFallingRockCard', payload, (response) => {
+          console.log("payload: ", payload);
           if (response.success === 'true') {
             slotnow.card = null;
             this.removeDraggedCard();
@@ -354,6 +379,7 @@ export default {
       } else {
         if (this.draggedCard.type === 'path') {
           this.$socket.emit('usePathCard', payload, (response) => {
+            console.log("payload: ", payload);
             if (response.success === 'true') {
               slotnow.card = this.draggedCard;
               this.removeDraggedCard();
