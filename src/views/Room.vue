@@ -77,6 +77,9 @@
     <!-- 오른쪽 사이드바 -->
     <RightSidebar
       :deck-empty="availableCards && availableCards.length === 0"
+      :user-id="userId"
+      :game-room-id="gameRoomId"
+      :host-player-id="hostPlayer.id"
       @dragover.prevent
       @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
@@ -130,6 +133,8 @@ export default {
   data() {
     return {
       gameRoomId: null,
+      userId:null,
+      hostPlayer: null,
       user: null,
       cards: [],
       availablecards: [],
@@ -162,12 +167,17 @@ export default {
   },
   created() {
     this.gameRoomId = this.$route.query.roomId
+    this.userId = this.$route.query.userId
     this.user = JSON.parse(localStorage.getItem('user'))
     this.myNickname = this.user.nickname
 
     this.$socket.emit('getGameRoomUsers', { gameRoomId: this.gameRoomId })
     this.$socket.on('gameRoomUsers', ({ users }) => {
-      this.users = users.map(({ user }) => {
+      console.log('전체 users:', users);
+      this.users = users.map(({ user }, index) => {
+
+        console.log(`[${index}] 사용자 정보:`, user); // 각 user 객체 개별 로그
+
         return {
           id: user.id,
           nickname: user.nickname,
@@ -175,6 +185,12 @@ export default {
           birthDate: user.birthDate,
         }
       })
+
+       // 첫 번째 유저를 호스트로 설정
+      if (this.users.length > 0) {
+        this.hostPlayer = this.users[0];
+        console.log(' hostPlayer:', this.hostPlayer);
+      }
     })
   },
   mounted() {

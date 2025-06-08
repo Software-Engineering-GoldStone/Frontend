@@ -23,7 +23,12 @@
       <button class="end-game-button" @click="endGame">게임 종료</button>
       <!-- 금덩이 카드 분배 버튼 -->
       <button class="distribute-goldstone-cards-button" @click="openGoldstonePopup">금덩이 분배</button>
-
+      <!-- 게임 시작 버튼: userId 와 hostPlayerId 가 같을 때만 보임 -->
+      <button
+        v-if="userId === hostPlayerId"
+        class="start-game-button"
+        @click="startGame"
+      >게임 시작</button>
       <!-- 30초 타이머 -->
       <div v-if="timer > 0" class="timer">
         남은 시간: {{ timer }}초
@@ -46,8 +51,18 @@
 
 export default {
   props: {
+    userId: String,
+    hostPlayerId: String,
     deckEmpty: {
       type: Boolean,
+      required: true
+    },
+    userId: {
+      type: String,
+      required: true
+    },
+    gameRoomId: {
+      type: String,
       required: true
     }
   },
@@ -67,6 +82,20 @@ export default {
     discardCard() {
       this.$emit('discard-card');
     },
+    startGame() {
+      console.log('userId:', this.userId);
+      console.log('gameRoomId:', this.gameRoomId);
+
+      const payload = {
+        userId: this.userId,
+        gameRoomId: this.gameRoomId
+      };
+
+      console.log('게임 시작 emit payload:', payload);  // 콘솔에 출력
+
+      this.$socket.emit('startGame', payload);
+    },
+
     endGame() {
       this.$emit('end-game');
     },
@@ -181,8 +210,29 @@ export default {
   transition: background-color 0.2s ease;
 }
 
+
 .end-game-button:hover {
   background-color: #c0392b;
+}
+
+
+/* 게임 종료 버튼 */
+.start-game-button {
+  margin-top: 30px;
+  padding: 10px 20px;
+  width: 100%;
+  background-color: #250329;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+
+.start-game-button:hover {
+  background-color: #6a2660;
 }
 
 .distribute-goldstone-cards-button {

@@ -27,6 +27,7 @@ export default {
       this.$router.push({
         path: '/room', //Room.vue 로 이동
         query: {
+          userId: this.$user.id,
           roomId: room.gameRoomId,
         },
       })
