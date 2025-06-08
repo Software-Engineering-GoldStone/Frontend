@@ -1,129 +1,65 @@
 <template>
-  <div ref="lobby-background" class="lobby-background" >
-  <!-- 게임 로고 이미지 -->
-  <img src="@/assets/GameLogo2.png" alt="사보타지" class="game-logo" />
-  
+  <div ref="lobby-background" class="lobby-background">
+    <!-- 게임 로고 이미지 -->
+    <img src="@/assets/GameLogo2.png" alt="사보타지" class="game-logo" />
+
     <!-- 닉네임 입력 -->
-    <input
-      v-model="nickname"
-      type="text"
-      placeholder="닉네임"
-      class="input-box"
-    />
+    <input v-model="nickname" type="text" placeholder="닉네임" class="input-box" />
 
     <!-- 생년월일 입력 -->
-    <input
-      v-model="birthdate"
-      type="date"
-      class="input-box"
-    />
+    <input v-model="birthdate" type="date" class="input-box" />
 
     <button class="create-room-btn" @click="createRoom">게임 시작</button>
   </div>
 </template>
 
 <script>
-import { io } from "socket.io-client";
-import axios from 'axios';
-
-
 export default {
   data() {
     return {
-      socket: null,
       nickname: '',
-      birthdate: ''
-    };
+      birthdate: '',
+    }
   },
 
-  created() {
-  this.socket = io('ws://172.17.78.133:3031', {transports: ['websocket'], reconnection: false});
-
-  // 소켓 연결 완료 이벤트 핸들러
-  this.socket.on('connect', () => {
-    console.log('Socket connected with id:', this.socket.id);
-  });
-
-  this.socket.on('connect_error', (err) => {
-    console.error('Socket connection error in homeview.vue:', err);
-  });
-/*
-  this.socket.on('userList', (userList) => {
-    console.log('소켓으로 받은 유저 리스트:', userList);
-    this.users = userList; 
-  });
-*/
+  mounted() {
+    this.$socket.on('gameRoomJoined', (room) => {
+      this.$router.push({
+        path: '/room', //Room.vue 로 이동
+        query: {
+          roomId: room.gameRoomId,
+        },
+      })
+    })
   },
   methods: {
-   /*
-    createRoom() {
-      if (!this.nickname || !this.birthdate) {
-        alert('닉네임과 생년월일을 입력해주세요.');
-        return;
-      }
-
-      // 1. 유저 생성 요청
-      this.socket.emit('createUser', {
-        nickname: this.nickname,
-        birthdate: this.birthdate
-      }, (user) => {
-        console.log('생성된 유저:', user);
-
-        // 2. 게임방 입장 요청
-        this.socket.emit('joinRoom', { userId: user.userId }, (room) => {
-          console.log('입장한 게임룸:', room);
-
-          // 3. 라우팅
-          this.$router.push({
-            path: '/room', //Room.vue 로 이동
-            query: {
-              roomId: room.roomId,
-              userId: user.userId,
-              nickname: user.nickname
-            }
-          });
-        });
-      });
-    }
- */
     async createRoom() {
       if (!this.nickname || !this.birthdate) {
-        alert('닉네임과 생년월일을 입력해주세요.');
-        return;
+        alert('닉네임과 생년월일을 입력해주세요.')
+        return
       }
       try {
         // 1. 유저 생성 API 호출
-        const userRes = await axios.post('http://172.17.78.133:8080/users', {
+        const userRes = await this.$axios.post('/users', {
           nickname: this.nickname,
-          birthdate: this.birthdate
-        });
+          birthdate: this.birthdate,
+        })
 
-        console.log(userRes);
+        localStorage.setItem('user', JSON.stringify(userRes.data))
 
-        const user = userRes.data;
-        console.log('생성된 유저:', user);
+        this.$user = userRes.data
 
         // 2. 게임방 입장 요청
-        this.socket.emit('joinGameRoom', { userId: user.userId }, (room) => {
-          console.log('입장한 게임룸:', room);
-
-          // 3. 라우팅
-          this.$router.push({
-            path: '/room', //Room.vue 로 이동
-            query: {
-              roomId: room.roomId,
-              userId: user.userId,
-              nickname: user.nickname
-            }
-          });
-        });
-
+        this.$socket.emit('joinGameRoom', {
+          userId: this.$user.id,
+          gameRoomId: this.$defaultGameRoomId,
+        })
       } catch (error) {
-        console.error('API 호출 실패:', error);
-        alert('서버 오류가 발생했습니다.');
+        console.error('API 호출 실패:', error)
+        alert('서버 오류가 발생했습니다.')
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
