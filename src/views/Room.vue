@@ -79,7 +79,7 @@
       :deck-empty="availableCards && availableCards.length === 0"
       :user-id="userId"
       :game-room-id="gameRoomId"
-      :host-player-id="hostPlayer.id"
+      :host-player-id="hostPlayer ? hostPlayer.id : null"
       @dragover.prevent
       @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
@@ -190,6 +190,7 @@ export default {
       if (this.users.length > 0) {
         this.hostPlayer = this.users[0];
         console.log(' hostPlayer:', this.hostPlayer);
+        console.log(' hostPlayer:', this.hostPlayer.id);
       }
     })
   },
