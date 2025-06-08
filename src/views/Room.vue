@@ -191,6 +191,7 @@ export default {
         const images = [player1, player2, player3, player4, player5]
 
         this.playerList = data.map((user) => ({
+          userId: user.id,
           nickname: user.nickname,
           role: user.role || '없음',
           gold: 0,
@@ -366,11 +367,29 @@ export default {
       }
     },
     //player에게 행동카드 사용할 때
-    onDropOnPlayer(playerIndex) {
-      if (!this.draggedCard || this.draggedCard.type !== 'action') return
+    onDropOnPlayer(userId) {
+      console.log('userId:', userId);
+      console.log('playerList ids:', this.playerList.map(p => p.userId));
 
-      const subtype = this.draggedCard.subtype
-      const player = this.playerList[playerIndex]
+      if (this.draggedCard.type !== 'action') return
+
+      // userId로 정확한 player 객체 찾기
+      const playerIndex = this.playerList.findIndex(p => String(p.userId).trim() === String(userId).trim());
+
+      console.log('찾은 인덱스:', playerIndex);
+
+      if (playerIndex !== -1) {
+        const matchedPlayer = this.playerList[playerIndex];
+        this.targetUserId = matchedPlayer.userId
+        console.log('this.targetUserId:', this.targetUserId);
+        console.log('찾은 플레이어 userId:', matchedPlayer.userId);
+      } else {
+        console.warn('해당 userId를 가진 플레이어를 찾을 수 없습니다.');
+      }
+      const subtype = this.draggedCard.subtype;
+      
+      const player = this.playerList[playerIndex];
+      console.log('playerList:', this.playerList.map(p => p.userId));
 
       // 수리/블록 카드만 처리
       const validTypes = [
@@ -417,6 +436,22 @@ export default {
         } else {
           return // 수리할 대상이 없으면 아무것도 하지 않음
         }
+
+        const selectedTools = this.extractToolType(subtype);
+
+        const payload = {
+          userId: this.userId,
+          //cardId: this.cardId
+          cardType: 'ACTION',
+          actionCardType: 'REPAIR',
+          targetUserId : this.targetUserId,
+          roomId:  this.gameRoomId,
+          selectedTool: selectedTools
+        };
+        console.log('도구 수리 카드 emit payload:', payload);  // 콘솔에 출력
+
+        this.$socket.emit('useRepairToolCard', payload);
+
       } else {
         // block 카드일 경우: 중복 없이 추가
         if (!player.status.includes(subtype)) {
@@ -426,9 +461,29 @@ export default {
           this.playerList[playerIndex].status = updatedStatus
           this.getRandomCard()
         }
+
+        const selectedTools = this.extractToolType(subtype);
+
+        const payload = {
+          userId: this.userId,
+          //cardId: this.cardId
+          cardType: 'ACTION',
+          actionCardType: 'DESTROY',
+          targetUserId : this.targetUserId,
+          roomId:  this.gameRoomId,
+          selectedTool: selectedTools
+        };
+        console.log('도구 고장 카드 emit payload:', payload);  // 콘솔에 출력
+
+        this.$socket.emit('useRepairToolCard', payload);
+
       }
 
       this.removeDraggedCard()
+    },
+    extractToolType(subtype) {
+      const tools = ['cart', 'lantern', 'pickaxe'];
+      return tools.filter(tool => subtype.includes(tool));
     },
 
     // 맵 드래그하여 탐색할 때

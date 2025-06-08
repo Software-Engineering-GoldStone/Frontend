@@ -94,6 +94,9 @@ export default {
       console.log('게임 시작 emit payload:', payload);  // 콘솔에 출력
 
       this.$socket.emit('startGame', payload);
+
+      // 타이머 시작 (호스트만)
+      this.startTimer();
     },
 
     endGame() {
@@ -132,11 +135,6 @@ export default {
     closeTimerEndPopup() {
       this.showTimerEndPopup = false;
     },
-  },
-  mounted() {
-    setTimeout(() => {
-      this.startTimer();
-    }, 3000);
   },
   beforeUnmount() {
     if (this.timerInterval) {

@@ -4,29 +4,32 @@
       v-for="(player, index) in players"
       :key="index"
       @dragover.prevent
-      @drop="$emit('drop-on-player', index)" 
+      @drop="$emit('drop-on-player', player.userId)"
       :class="['player-box', { highlight: player.highlight }]">
       <img :src="player.image" alt="avatar" class="avatar" />
+
       <div class="player-info">
         <span class="player-name" style="margin-right: 12px;">{{ player.nickname }}</span> <!-- 플레이어 이름 -->
+        </div>
+        
+        <!-- 상태 아이콘들 -->
+        <div class="status-icons">
+        <img
+          v-if="Array.isArray(player.status) && player.status.includes('block_cart')"
+          :src="blocked_icons.cart_blocked"
+          class="status-icon"
+        />
+        <img
+          v-if="Array.isArray(player.status) && player.status.includes('block_lantern')"
+          :src="blocked_icons.lantern_blocked"
+          class="status-icon"
+        />
+        <img
+          v-if="Array.isArray(player.status) && player.status.includes('block_pickaxe')"
+          :src="blocked_icons.pickaxe_blocked"
+          class="status-icon"
+        />
       </div>
-      <!-- 상태 아이콘 표시 -->
-      <img
-        v-if="Array.isArray(player.status) && player.status.includes('block_cart')"
-        :src="blocked_icons.cart_blocked"
-        class="status-icon"
-      />
-      <img
-        v-if="Array.isArray(player.status) && player.status.includes('block_lantern')"
-        :src="blocked_icons.lantern_blocked"
-        class="status-icon"
-      />
-      <img
-        v-if="Array.isArray(player.status) && player.status.includes('block_pickaxe')"
-        :src="blocked_icons.pickaxe_blocked"
-        class="status-icon"
-      />
-
     </div>
   </aside>
 </template>
@@ -36,6 +39,10 @@ export default {
   props: {
     players: {
       type: Array,
+      required: true
+    },
+    userId: {
+      type: String,
       required: true
     }
   },
