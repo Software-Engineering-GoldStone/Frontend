@@ -250,23 +250,22 @@ export default {
       this.getRandomCard()
     },
     async handleDiscardCard() {
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/discardCard`, {
-          userId: this.userId,
-          gameRoomId: this.gameRoomId,
-          cardId: this.draggedCard.id,
-        });
+      const payload = {
+        userId: this.userId,
+        gameRoomId: this.gameRoomId,
+        cardId: this.draggedCard.id,
+      };
 
-        if (response.status === 200 && response.data.success === "true") {
-          console.log("카드 버리기 성공:", response.data.message);
-          this.removeDraggedCard(); // 로컬 카드 목록에서 제거
-          this.getRandomCard();     // 새 카드 지급 로직 (필요하다면)
+      this.$socket.emit('discardCard', payload, (response) => {
+        if (response.success === 'true') {
+          console.log("카드 버리기 성공: ", response.message);
+
+          this.removeDraggedCard();  // 로컬 카드에서 제거
+          this.getRandomCard();      // 새 카드 지급
         } else {
-          console.error("카드 버리기 실패:", response.data.message);
+          console.error("카드 버리기 실패: ", response.message);
         }
-      } catch (error) {
-        console.error("카드 버리기 요청 실패:", error);
-      }
+      });
     },
     handleEndGame() {
       this.showGameResultPopup = true
@@ -318,32 +317,31 @@ export default {
 
       // 좌표에 해당하는 슬롯 찾기
       const slotnow = this.slots.find(s => s.x === x && s.y === y);
+      const payload = {
+        userId: this.userId,
+        cardId: this.draggedCard.id,
+        cardType: 'ACTION',
+        actionCardType: 'ROCKFALL',
+        roomId: this.gameRoomId,
+        targetCellX: x - 13,
+        targetCellY: 17 - y
+      };
 
       // 낙석 카드를 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
       if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
         if (!slntnow.card) return;
-        try {
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/useFallingRockCard`, {
-            userId: this.userId,
-            cardId: this.draggedCard.id,
-            cardType: 'ACTION',
-            actionCardType: 'ROCKFALL',
-            roomId: this.gameRoomId,
-            targetCellX: x - 13,
-            targetCellY: 17 - y
-          });
 
-          if (response.status === 200 && response.data.success === 'true') {
+        this.$socket.emit('useFallingRockCard', payload, (response) => {
+          if (response.success === 'true') {
             slotnow.card = null;
             this.removeDraggedCard();
             this.getRandomCard();
-            console.log("낙석 카드 사용 성공: ", response.data.message);
+            console.log("낙석 카드 사용 성공: ", response.message);
           } else {
-            console.warn("낙석 카드 사용 실패: ", response.data.message);
+            console.warn("낙석 카드 실패: ", response.message);
           }
-        } catch (error) {
-          console.error("낙석 카드 요청 실패: ", error);
-        }
+        });
+
         return;
       } else if (
         this.draggedCard &&
@@ -353,27 +351,18 @@ export default {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
         return;
       } else {
-        try {
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/usePathCard`, {
-            userId: this.userId,
-            cardId: this.draggedCard.id,
-            cardType: 'PATH',
-            roomId: this.gameRoomId,
-            targetCellX: x - 13,
-            targetCellY: 17 - y
+        if (this.draggedCard.type === 'path') {
+          this.$socket.emit('usePathCard', payload, (response) => {
+            if (response.success === 'true') {
+              slotnow.card = this.draggedCard;
+              this.removeDraggedCard();
+              this.getRandomCard();
+              console.log("길 카드 배치 성공: ", response.message);
+            } else {
+              console.warn("길 카드 실패: ", response.message);
+            }
           });
-          if (response.status === 200 && response.data.success === 'true') {
-            slotnow.card = this.draggedCard;
-            this.removeDraggedCard();
-            this.getRandomCard();
-            console.log("길 카드 배치 성공: ", response.data.message);
-          } else {
-            console.warn("길 카드 배치 실패: ", response.data.message);
-          }
-        } catch (error) {
-          console.error("길 카드 요청 실패: ", error);
         }
-        return;
       }
     },
     //player에게 행동카드 사용할 때
