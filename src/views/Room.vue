@@ -251,7 +251,7 @@ export default {
     },
     async handleDiscardCard() {
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/discard`, {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/discardCard`, {
           userId: this.userId,
           gameRoomId: this.gameRoomId,
           cardId: this.draggedCard.id,
@@ -323,7 +323,7 @@ export default {
       if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
         if (!slntnow.card) return;
         try {
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/use-action-card`, {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/useFallingRockCard`, {
             userId: this.userId,
             cardId: this.draggedCard.id,
             cardType: 'ACTION',
@@ -354,7 +354,7 @@ export default {
         return;
       } else {
         try {
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/use-action-card`, {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/usePathCard`, {
             userId: this.userId,
             cardId: this.draggedCard.id,
             cardType: 'PATH',
