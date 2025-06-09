@@ -77,6 +77,7 @@
       :user-id="userId"
       :game-room-id="gameRoomId"
       :host-player-id="hostPlayer ? hostPlayer.id : null"
+      :turn-player="turnPlayer"
       @dragover.prevent
       @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
@@ -224,6 +225,7 @@ export default {
         id: data.nextPlayerId,
         name: data.nextPlayerName,
       }
+      alert('다음 턴으로 넘어갑니다.')
       this.$socket.getUserDeck(this.gameRoomId, this.userId)
     })
 

@@ -53,6 +53,11 @@ export default {
       type: String,
       required: true,
     },
+    turnPlayer: {
+      type: Object,
+      default: () => ({ id: null, name: '' }),
+      required: true,
+    },
   },
   data() {
     return {
@@ -65,6 +70,10 @@ export default {
   },
   methods: {
     drawCard() {
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
       this.$socket.nextTurn(this.gameRoomId)
     },
     discardCard() {
