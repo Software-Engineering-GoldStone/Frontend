@@ -5,10 +5,10 @@
       <h3>🪄 행동카드 존</h3>
       <div class="card-row">
         <div
-          v-for="(card, index) in actionCards"
-          :key="'action-' + index"
+          v-for="card in actionCards"
+          :key="card.id"
           class="card"
-          draggable="true" 
+          draggable="true"
           @click="selectCard(card)"
           @dragstart="(e) => onCardDrag(card, e)"
         >
@@ -21,11 +21,11 @@
     <div class="card-section">
       <h3>🛤️ 길카드 존</h3>
       <div class="card-row">
-        <div 
-          v-for="card in pathCards" 
-          :key="card.id" 
-          class="card" 
-          draggable="true" 
+        <div
+          v-for="card in pathCards"
+          :key="card.id"
+          class="card"
+          draggable="true"
           @dragstart="onCardDrag(card)"
         >
           <img :src="card.image" alt="card" />
@@ -40,27 +40,27 @@ export default {
   props: {
     cards: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     actionCards() {
-      return (this.cards || []).filter(card => card.type === 'action');
+      return (this.cards || []).filter((card) => card.type === 'ACTION')
     },
     pathCards() {
-      return (this.cards || []).filter(card => card.type === 'path');
-    }
+      return (this.cards || []).filter((card) => card.type === 'PATH')
+    },
   },
   methods: {
     selectCard(card) {
-      this.$emit('cardSelected', card);
+      this.$emit('cardSelected', card)
     },
     onCardDrag(card) {
       // 드래그된 카드 정보를 부모로 전달
-      this.$emit('drag-card', card);
-    }
-  }
-};
+      this.$emit('drag-card', card)
+    },
+  },
+}
 </script>
 
 <style scoped>
@@ -111,7 +111,9 @@ export default {
   justify-content: flex-start;
   border-radius: 8px;
   overflow: hidden; /* 이미지가 초과되는 것을 방지 */
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
   position: relative; /* 박스 크기 변환을 위해 필요 */
 }
 
@@ -122,7 +124,9 @@ export default {
   object-fit: contain;
   border-radius: 8px;
   border: 2px solid transparent;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 }
 
 .card:hover {
