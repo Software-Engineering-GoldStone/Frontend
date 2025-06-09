@@ -77,6 +77,7 @@ export default {
       }
 
       this.$socket.emit('startGame', payload)
+      this.startTimer()
     },
     endGame() {
       this.$emit('end-game')
@@ -114,11 +115,6 @@ export default {
     closeTimerEndPopup() {
       this.showTimerEndPopup = false
     },
-  },
-  mounted() {
-    setTimeout(() => {
-      this.startTimer()
-    }, 3000)
   },
   beforeUnmount() {
     if (this.timerInterval) {

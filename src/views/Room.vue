@@ -141,6 +141,7 @@ export default {
       playerList: [], // 사이드바용 가공된 리스트
       users: [], // 소켓에서 직접 받는 사용자 리스트
       nickname: '',
+      cellInfo: [],
       startCard: {
         image: '/img/cards/start.png',
       },
@@ -241,6 +242,7 @@ export default {
         const images = [player1, player2, player3, player4, player5]
 
         this.playerList = data.map((user) => ({
+          userId: user.id,
           nickname: user.nickname,
           role: user.role || '없음',
           gold: 0,
@@ -277,6 +279,23 @@ export default {
     },
   },
   methods: {
+    getBoardState() {
+      const payload = {
+        gameRoomId: this.gameRoomId,
+      }
+      console.log('getBoardState() payload: ', payload)
+
+      this.$socket.emit('getBoardInfo', payload, (response) => {
+        console.log('callback of getBoardState(): ', response)
+
+        if (response && response.cellInfo) {
+          this.cellInfo = response.cellInfo
+        } else {
+          console.warn('Invalid cellInfo response: ', response)
+        }
+      })
+    },
+
     revealGoalCard(goalIndex) {
       // 드래그된 카드가 map 카드일 때만 실행
       if (!this.draggedCard || this.draggedCard.image !== '/img/cards/MAP.png') {
@@ -291,13 +310,18 @@ export default {
         return
       }
 
-      // 랜덤하게 goal_gold / goal_rock_1 / goal_rock_2 중 하나 선택
       const goalImages = [
         '/img/cards/goal_gold.png',
         '/img/cards/goal_rock_1.png',
         '/img/cards/goal_rock_2.png',
       ]
-      const randomIndex = Math.floor(Math.random() * goalImages.length)
+      const goalPos = [
+        { x: 21, y: 13 },
+        { x: 21, y: 15 },
+        { x: 21, y: 17 },
+      ]
+      // const { x, y } =
+      // const randomIndex = Math.floor(Math.random() * goalImages.length)
 
       const selectedImage = goalImages[randomIndex]
 
@@ -312,10 +336,24 @@ export default {
       this.removeDraggedCard()
       this.getRandomCard()
     },
-    handleDiscardCard() {
-      console.log('카드 버리기')
-      this.removeDraggedCard()
-      this.getRandomCard()
+    async handleDiscardCard() {
+      const payload = {
+        userId: this.userId,
+        gameRoomId: this.gameRoomId,
+        cardId: this.draggedCard.id,
+      }
+
+      this.$socket.emit('discardCard', payload, (response) => {
+        console.log('payload: ', payload)
+        if (response.success === 'true') {
+          console.log('카드 버리기 성공: ', response.message)
+
+          this.removeDraggedCard() // 로컬 카드에서 제거
+          this.getRandomCard() // 새 카드 지급
+        } else {
+          console.error('카드 버리기 실패: ', response.message)
+        }
+      })
     },
     handleEndGame() {
       this.showGameResultPopup = true
@@ -368,20 +406,38 @@ export default {
       }
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
-    onCardDrop(x, y) {
+    async onCardDrop(x, y) {
       if (!this.draggedCard) return
 
       // 좌표에 해당하는 슬롯 찾기
       const slotnow = this.slots.find((s) => s.x === x && s.y === y)
+      const payload = {
+        userId: this.userId,
+        cardId: this.draggedCard.id,
+        cardType: 'ACTION',
+        actionCardType: 'ROCKFALL',
+        roomId: this.gameRoomId,
+        targetCellX: x - 13,
+        targetCellY: 17 - y,
+      }
 
-      // 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
+      // 낙석 카드를 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
       if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
-        if (slotnow.card) {
-          // 기존 슬롯 카드 삭제
-          slotnow.card = null
-          this.removeDraggedCard()
-          this.getRandomCard()
-        }
+        if (!slotnow.card) return
+
+        this.$socket.emit('useFallingRockCard', payload, (response) => {
+          console.log('payload: ', payload)
+          if (response.success === 'true') {
+            slotnow.card = null
+            this.removeDraggedCard()
+            this.getRandomCard()
+            console.log('낙석 카드 사용 성공: ', response.message)
+          } else {
+            console.warn('낙석 카드 실패: ', response.message)
+          }
+        })
+
+        return
       } else if (
         this.draggedCard &&
         this.draggedCard.type === 'action' &&
@@ -390,17 +446,53 @@ export default {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
         return
       } else {
-        slotnow.card = this.draggedCard
-        this.removeDraggedCard()
-        this.getRandomCard()
+        if (this.draggedCard.type === 'path') {
+          this.$socket.emit('usePathCard', payload, (response) => {
+            console.log('payload: ', payload)
+            if (response.success === 'true') {
+              slotnow.card = this.draggedCard
+              this.removeDraggedCard()
+              this.getRandomCard()
+              console.log('길 카드 배치 성공: ', response.message)
+            } else {
+              console.warn('길 카드 실패: ', response.message)
+            }
+          })
+        }
       }
     },
     //player에게 행동카드 사용할 때
-    onDropOnPlayer(playerIndex) {
-      if (!this.draggedCard || this.draggedCard.type !== 'action') return
+    onDropOnPlayer(userId) {
+      console.log('userId:', userId)
+      console.log(
+        'playerList ids:',
+        this.playerList.map((p) => p.userId),
+      )
 
+      if (this.draggedCard.type !== 'action') return
+
+      // userId로 정확한 player 객체 찾기
+      const playerIndex = this.playerList.findIndex(
+        (p) => String(p.userId).trim() === String(userId).trim(),
+      )
+
+      console.log('찾은 인덱스:', playerIndex)
+
+      if (playerIndex !== -1) {
+        const matchedPlayer = this.playerList[playerIndex]
+        this.targetUserId = matchedPlayer.userId
+        console.log('this.targetUserId:', this.targetUserId)
+        console.log('찾은 플레이어 userId:', matchedPlayer.userId)
+      } else {
+        console.warn('해당 userId를 가진 플레이어를 찾을 수 없습니다.')
+      }
       const subtype = this.draggedCard.subtype
+
       const player = this.playerList[playerIndex]
+      console.log(
+        'playerList:',
+        this.playerList.map((p) => p.userId),
+      )
 
       // 수리/블록 카드만 처리
       const validTypes = [
@@ -447,6 +539,21 @@ export default {
         } else {
           return // 수리할 대상이 없으면 아무것도 하지 않음
         }
+
+        const selectedTools = this.extractToolType(subtype)
+
+        const payload = {
+          userId: this.userId,
+          //cardId: this.cardId
+          cardType: 'ACTION',
+          actionCardType: 'REPAIR',
+          targetUserId: this.targetUserId,
+          roomId: this.gameRoomId,
+          selectedTool: selectedTools,
+        }
+        console.log('도구 수리 카드 emit payload:', payload) // 콘솔에 출력
+
+        this.$socket.emit('useRepairToolCard', payload)
       } else {
         // block 카드일 경우: 중복 없이 추가
         if (!player.status.includes(subtype)) {
@@ -456,9 +563,28 @@ export default {
           this.playerList[playerIndex].status = updatedStatus
           this.getRandomCard()
         }
+
+        const selectedTools = this.extractToolType(subtype)
+
+        const payload = {
+          userId: this.userId,
+          //cardId: this.cardId
+          cardType: 'ACTION',
+          actionCardType: 'DESTROY',
+          targetUserId: this.targetUserId,
+          roomId: this.gameRoomId,
+          selectedTool: selectedTools,
+        }
+        console.log('도구 고장 카드 emit payload:', payload) // 콘솔에 출력
+
+        this.$socket.emit('useRepairToolCard', payload)
       }
 
       this.removeDraggedCard()
+    },
+    extractToolType(subtype) {
+      const tools = ['cart', 'lantern', 'pickaxe']
+      return tools.filter((tool) => subtype.includes(tool))
     },
 
     // 맵 드래그하여 탐색할 때
