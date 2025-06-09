@@ -8,7 +8,7 @@
       <span>역할: {{ role === 'MINER' ? '광부' : '사보타지' }}</span>
     </div>
     <div class="game-status">
-      <span>현재 턴: {{ turnPlayer }}</span>
+      <span>현재 턴: {{ turnPlayer?.name || '' }}</span>
       <span>금덩이 개수: {{ gold }}</span>
       <span>라운드: {{ round }}</span>
       <img src="@/assets/infoIcon.png" alt="라운드 설명" class="info-icon" @click="openRoundPdf" />
@@ -55,7 +55,10 @@ export default {
   props: {
     nickname: String,
     role: String,
-    turnPlayer: String,
+    turnPlayer: {
+      type: Object,
+      default: () => ({ id: null, name: '' }),
+    },
     gold: {
       type: Number,
       default: 0,

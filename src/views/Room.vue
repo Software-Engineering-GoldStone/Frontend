@@ -199,7 +199,7 @@ export default {
 
     this.$socket.on('gameStarted', (data) => {
       this.round = data.round
-      // this.$socket.emit('getGameState', { gameRoomId: this.gameRoomId })
+      this.$socket.emit('getGameState', { gameRoomId: this.gameRoomId })
     })
     this.$socket.on('yourRole', (data) => (this.playerList.role = data))
     this.$socket.on('yourCardDeck', (data) => {
@@ -218,7 +218,10 @@ export default {
       })
     })
     this.$socket.on('gameState', ({ currentPlayerId, currentPlayerName, myCards }) => {
-      this.turnPlayer = currentPlayerName
+      this.turnPlayer = {
+        id: currentPlayerId,
+        name: currentPlayerName,
+      }
       this.cardsFromServer = myCards.map((card) => {
         return {
           id: card.id,
