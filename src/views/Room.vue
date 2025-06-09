@@ -75,17 +75,14 @@
 
     <div v-if="repairPopup.show" class="repair-popup">
       <p>어떤 도구를 수리하시겠습니까?</p>
-      <div class="repair-button-group"> <!-- ✅ 추가된 div -->
+      <div class="repair-button-group">
+        <!-- ✅ 추가된 div -->
         <button
           v-for="block in repairPopup.blocksToChoose"
           :key="block"
           @click="resolveRepairChoice(block)"
         >
-          <img
-            :src="getIconForBlock(block)"
-            :alt="block"
-            class="repair-icon"
-          />
+          <img :src="getIconForBlock(block)" :alt="block" class="repair-icon" />
         </button>
       </div>
     </div>
@@ -550,30 +547,25 @@ export default {
         status: newStatus,
       }
 
-        // 카드 제거 + 새 카드 받기
-        this.removeDraggedCard()
-        this.getRandomCard()
-      },//onDropOnPlayer
-      resolveRepairChoice(selectedBlock) {
-        const {
-          userId,
-          playerIndex,
-          cardSubtype,
-          statusCopy,
-        } = this.repairPopup
+      // 카드 제거 + 새 카드 받기
+      this.removeDraggedCard()
+      this.getRandomCard()
+    }, //onDropOnPlayer
+    resolveRepairChoice(selectedBlock) {
+      const { userId, playerIndex, cardSubtype, statusCopy } = this.repairPopup
 
-        // 선택된 파괴 상태만 제거
-        const idx = statusCopy.indexOf(selectedBlock)
-        if (idx !== -1) statusCopy.splice(idx, 1)
+      // 선택된 파괴 상태만 제거
+      const idx = statusCopy.indexOf(selectedBlock)
+      if (idx !== -1) statusCopy.splice(idx, 1)
 
-        // 상태 업데이트
-        this.playerList[playerIndex] = {
-          ...this.playerList[playerIndex],
-          status: statusCopy
-        }
+      // 상태 업데이트
+      this.playerList[playerIndex] = {
+        ...this.playerList[playerIndex],
+        status: statusCopy,
+      }
 
-        // emit 필요 시 사용
-        /*
+      // emit 필요 시 사용
+      /*
         this.$socket.emit('useRepairToolCard', {
           userId: this.userId,
           cardType: 'ACTION',
@@ -597,16 +589,16 @@ export default {
         blocksToChoose: [],
         statusCopy: [],
       }
-      },
+    },
 
-      getIconForBlock(block) {
-        const iconMap = {
-          DESTROY_CART: '/img/icons/cart_intact.png',
-          DESTROY_LIGHT: '/img/icons/lantern_intact.png',
-          DESTROY_PICKAX: '/img/icons/pick_intact.png',
-        }
-        return iconMap[block] || '/img/icons/default.png'
-      },
+    getIconForBlock(block) {
+      const iconMap = {
+        DESTROY_CART: '/img/icons/cart_intact.png',
+        DESTROY_LIGHT: '/img/icons/lantern_intact.png',
+        DESTROY_PICKAX: '/img/icons/pick_intact.png',
+      }
+      return iconMap[block] || '/img/icons/default.png'
+    },
 
     extractToolType(subtype) {
       const tools = ['CART', 'LIGHT', 'PICKAX']
