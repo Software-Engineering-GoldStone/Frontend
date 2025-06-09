@@ -170,6 +170,7 @@ export default {
         y: Math.floor(index / 30),
         card: null,
       })),
+      changedTargetSlot: null,
       offset: { x: -256, y: -128 },
       isDragging: false,
       dragStart: { x: 0, y: 0 },
@@ -269,8 +270,14 @@ export default {
     })
     this.socketInstance.on('cardPlayed', (data) => {
       if (data.success === true) {
+        this.changedTargetSlot.card = this.draggedCard
+        this.removeDraggedCard()
         this.$socket.getBoardInfo(this.gameRoomId)
       }
+    })
+    this.socketInstance.on('cardPlayedError', (err) => {
+      alert(err)
+      this.turnEnd = false
     })
     this.socketInstance.on('boardInfo', ({ cellInfo }) => {
       cellInfo.forEach((cell) => {
@@ -535,8 +542,7 @@ export default {
             y: np.y,
           })
 
-          slotnow.card = this.draggedCard
-          this.removeDraggedCard()
+          this.changedTargetSlot = slotnow
         }
       }
     },
