@@ -40,28 +40,14 @@
               @drop.prevent="handleDrop(slot)"
             >
               <!-- 슬롯에 카드가 있으면 카드 렌더링 -->
+              <!-- 백엔드 기준 -->
+              <!-- start cell : (0, 2) -> (13, 15) -->
+              <!-- goal cell : (8, 0), (8, 2), (8, 4) -> (21, 13), (21, 15), (21, 17) -->
+              <!-- 프론트로 치환하면 13의 차이가 발생 -->
               <img
                 v-if="slot.x === 13 && slot.y === 15"
                 :src="startCard.image"
                 alt="start"
-                class="dropped-card"
-              />
-              <img
-                v-if="slot.x === 21 && slot.y === 13"
-                :src="goalCards[0].image"
-                alt="goal 1"
-                class="dropped-card"
-              />
-              <img
-                v-if="slot.x === 21 && slot.y === 15"
-                :src="goalCards[1].image"
-                alt="goal 2"
-                class="dropped-card"
-              />
-              <img
-                v-if="slot.x === 21 && slot.y === 17"
-                :src="goalCards[2].image"
-                alt="goal 3"
                 class="dropped-card"
               />
               <img v-if="slot.card" :src="slot.card.image" alt="card" class="dropped-card" />
@@ -130,7 +116,7 @@ import player2 from '@/assets/player2.png'
 import player3 from '@/assets/player3.png'
 import player4 from '@/assets/player4.png'
 import player5 from '@/assets/player5.png'
-import { getActionCardImageUrl, getPathCardImageUrl } from '@/utils.js'
+import { convertToClientCellPos, getActionCardImageUrl, getPathCardImageUrl } from '@/utils.js'
 
 export default {
   components: {
@@ -186,7 +172,7 @@ export default {
         cardSubtype: null,
         blocksToChoose: [],
         statusCopy: [],
-      }
+      },
     }
   },
   created() {
@@ -216,6 +202,7 @@ export default {
     this.socketInstance.on('gameStarted', (data) => {
       this.round = data.round
       this.$socket.getGameState(this.gameRoomId)
+      this.$socket.getGoalCellInfo(this.gameRoomId)
     })
     this.socketInstance.on('yourRole', (data) => (this.playerList.role = data))
     this.socketInstance.on('yourCardDeck', (data) => {
@@ -247,6 +234,28 @@ export default {
       }
       alert('다음 턴으로 넘어갑니다.')
       this.$socket.getUserDeck(this.gameRoomId, this.userId)
+    })
+    this.socketInstance.on('goalCellInfo', (data) => {
+      data.forEach((cell) => {
+        const idx = this.slots.findIndex(
+          (slot) =>
+            slot.x === convertToClientCellPos(cell.x) && slot.y === convertToClientCellPos(cell.y),
+        )
+        if (idx === -1) {
+          console.error('slot not found')
+          console.error(`Cell from server: ${cell}`)
+          return
+        }
+
+        this.slots[idx] = {
+          ...this.slots[idx],
+          card: {
+            ...cell.card,
+            image: '/img/cards/goal_back.png',
+          },
+          sides: cell.sides,
+        }
+      })
     })
 
     this.nickname = this.user.nickname
@@ -478,75 +487,69 @@ export default {
     },
     //player에게 행동카드 사용할 때
     onDropOnPlayer(userId) {
-        console.log('드롭된 대상 userId:', userId)
-        if (this.draggedCard.type !== 'ACTION') return
+      console.log('드롭된 대상 userId:', userId)
+      if (this.draggedCard.type !== 'ACTION') return
 
-        const playerIndex = this.playerList.findIndex(p => p.userId === userId)
-        if (playerIndex === -1) return
+      const playerIndex = this.playerList.findIndex((p) => p.userId === userId)
+      if (playerIndex === -1) return
 
-        const player = this.playerList[playerIndex]
-        const subtype = this.draggedCard.subtype // 예: DESTROY_CART
-        const newStatus = [...player.status] // 기존 상태 복사
+      const player = this.playerList[playerIndex]
+      const subtype = this.draggedCard.subtype // 예: DESTROY_CART
+      const newStatus = [...player.status] // 기존 상태 복사
 
-        const repairToBlockMap = {
-          REPAIR_CART: ['DESTROY_CART'],
-          REPAIR_LIGHT: ['DESTROY_LIGHT'],
-          REPAIR_PICKAX: ['DESTROY_PICKAX'],
-          REPAIR_CART_LIGHT: ['DESTROY_CART', 'DESTROY_LIGHT'],
-          REPAIR_CART_PICKAX: ['DESTROY_CART', 'DESTROY_PICKAX'],
-          REPAIR_LIGHT_PICKAX: ['DESTROY_LIGHT', 'DESTROY_PICKAX'],
+      const repairToBlockMap = {
+        REPAIR_CART: ['DESTROY_CART'],
+        REPAIR_LIGHT: ['DESTROY_LIGHT'],
+        REPAIR_PICKAX: ['DESTROY_PICKAX'],
+        REPAIR_CART_LIGHT: ['DESTROY_CART', 'DESTROY_LIGHT'],
+        REPAIR_CART_PICKAX: ['DESTROY_CART', 'DESTROY_PICKAX'],
+        REPAIR_LIGHT_PICKAX: ['DESTROY_LIGHT', 'DESTROY_PICKAX'],
+      }
+
+      // 파괴 카드라면 상태 추가
+      if (subtype.startsWith('DESTROY')) {
+        if (!newStatus.includes(subtype)) {
+          newStatus.push(subtype)
         }
+        // 서버 emit 생략...
+      } else if (subtype.startsWith('REPAIR')) {
+        // 실제 플레이어 상태에 있는 고장 상태만 필터링
+        const possibleBlocks = repairToBlockMap[subtype] || []
+        const blocksToRemove = possibleBlocks.filter((block) => newStatus.includes(block))
 
-        // 파괴 카드라면 상태 추가
-        if (subtype.startsWith('DESTROY')) {
-          if (!newStatus.includes(subtype)) {
-            newStatus.push(subtype)
+        // 복수 고장 상태가 2개 이상이면 팝업 띄움
+        if (blocksToRemove.length > 1) {
+          this.repairPopup = {
+            show: true,
+            userId,
+            playerIndex,
+            cardSubtype: subtype,
+            blocksToChoose: blocksToRemove,
+            statusCopy: newStatus,
           }
-          // 서버 emit 생략...
-
-        } else if (subtype.startsWith('REPAIR')) {
-          // 실제 플레이어 상태에 있는 고장 상태만 필터링
-          const possibleBlocks = repairToBlockMap[subtype] || []
-          const blocksToRemove = possibleBlocks.filter(block => newStatus.includes(block))
-
-          // 복수 고장 상태가 2개 이상이면 팝업 띄움
-          if (blocksToRemove.length > 1) {
-            this.repairPopup = {
-              show: true,
-              userId,
-              playerIndex,
-              cardSubtype: subtype,
-              blocksToChoose: blocksToRemove,
-              statusCopy: newStatus,
-            }
-            return // 팝업 선택 후 처리
-          }
-
-          // 1개 이하면 바로 수리 처리
-          blocksToRemove.forEach(block => {
-            const idx = newStatus.indexOf(block)
-            if (idx !== -1) newStatus.splice(idx, 1)
-          })
-          // 서버 emit 생략...
+          return // 팝업 선택 후 처리
         }
 
-        // 상태 업데이트 반영
-        this.playerList[playerIndex] = {
-          ...player,
-          status: newStatus
-        }
+        // 1개 이하면 바로 수리 처리
+        blocksToRemove.forEach((block) => {
+          const idx = newStatus.indexOf(block)
+          if (idx !== -1) newStatus.splice(idx, 1)
+        })
+        // 서버 emit 생략...
+      }
 
-        // 카드 제거 + 새 카드 받기
-        this.removeDraggedCard()
-        this.getRandomCard()
-      },//onDropOnPlayer
+      // 상태 업데이트 반영
+      this.playerList[playerIndex] = {
+        ...player,
+        status: newStatus,
+      }
+
+      // 카드 제거 + 새 카드 받기
+      this.removeDraggedCard()
+      this.getRandomCard()
+    }, //onDropOnPlayer
     resolveRepairChoice(selectedBlock) {
-      const {
-        userId,
-        playerIndex,
-        cardSubtype,
-        statusCopy,
-      } = this.repairPopup
+      const { userId, playerIndex, cardSubtype, statusCopy } = this.repairPopup
 
       // 선택된 파괴 상태만 제거
       const idx = statusCopy.indexOf(selectedBlock)
@@ -555,7 +558,7 @@ export default {
       // 상태 업데이트
       this.playerList[playerIndex] = {
         ...this.playerList[playerIndex],
-        status: statusCopy
+        status: statusCopy,
       }
 
       // emit 필요 시 사용
@@ -570,19 +573,19 @@ export default {
       })
       */
 
-    // 카드 제거 및 새 카드 지급
-    this.removeDraggedCard()
-    this.getRandomCard()
+      // 카드 제거 및 새 카드 지급
+      this.removeDraggedCard()
+      this.getRandomCard()
 
-    // 팝업 닫기
-    this.repairPopup = {
-      show: false,
-      userId: null,
-      playerIndex: null,
-      cardSubtype: null,
-      blocksToChoose: [],
-      statusCopy: [],
-    }
+      // 팝업 닫기
+      this.repairPopup = {
+        show: false,
+        userId: null,
+        playerIndex: null,
+        cardSubtype: null,
+        blocksToChoose: [],
+        statusCopy: [],
+      }
     },
 
     extractToolType(subtype) {

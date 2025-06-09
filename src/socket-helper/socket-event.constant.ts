@@ -5,6 +5,7 @@ export enum SocketRequestEventName {
   START_GAME = 'startGame',
   NEXT_TURN = 'nextTurn',
   GET_USER_DECK = 'getUserDeck',
+  GET_GOAL_CELL_INFO = 'getGoalCellInfo',
 }
 
 export enum SocketResponseEventName {}
