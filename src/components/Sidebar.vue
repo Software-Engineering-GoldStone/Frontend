@@ -15,17 +15,17 @@
         <!-- 상태 아이콘들 -->
         <div class="status-icons">
         <img
-          v-if="Array.isArray(player.status) && player.status.includes('block_cart')"
+          v-if="Array.isArray(player.status) && player.status.includes('DESTROY_CART')"
           :src="blocked_icons.cart_blocked"
           class="status-icon"
         />
         <img
-          v-if="Array.isArray(player.status) && player.status.includes('block_lantern')"
+          v-if="Array.isArray(player.status) && player.status.includes('DESTROY_LIGHT')"
           :src="blocked_icons.lantern_blocked"
           class="status-icon"
         />
         <img
-          v-if="Array.isArray(player.status) && player.status.includes('block_pickaxe')"
+          v-if="Array.isArray(player.status) && player.status.includes('DESTROY_PICKAX')"
           :src="blocked_icons.pickaxe_blocked"
           class="status-icon"
         />

@@ -358,6 +358,12 @@ export default {
     // 카드가 드래그되었을 때
     onCardDrag(card, event) {
       this.draggedCard = card
+      const imagePath = card.image
+      const fileName = imagePath.split('/').filter(Boolean).pop().replace('.png', '')
+
+      // 파일명을 별도로 저장
+      this.draggedCard.subtype = fileName
+      console.log('드래그된 카드 파일명 subtype::::', this.draggedCard.subtype)
 
       if (event && event.dataTransfer) {
         event.dataTransfer.setData('application/json', JSON.stringify(card))
@@ -451,130 +457,75 @@ export default {
     },
     //player에게 행동카드 사용할 때
     onDropOnPlayer(userId) {
-      console.log('userId:', userId)
-      console.log(
-        'playerList ids:',
-        this.playerList.map((p) => p.userId),
-      )
+      console.log('드롭된 대상 userId:', userId)
+      if (this.draggedCard.type !== 'ACTION') return
 
-      if (this.draggedCard.type !== 'action') return
-
-      // userId로 정확한 player 객체 찾기
-      const playerIndex = this.playerList.findIndex(
-        (p) => String(p.userId).trim() === String(userId).trim(),
-      )
-
-      console.log('찾은 인덱스:', playerIndex)
-
-      if (playerIndex !== -1) {
-        const matchedPlayer = this.playerList[playerIndex]
-        this.targetUserId = matchedPlayer.userId
-        console.log('this.targetUserId:', this.targetUserId)
-        console.log('찾은 플레이어 userId:', matchedPlayer.userId)
-      } else {
-        console.warn('해당 userId를 가진 플레이어를 찾을 수 없습니다.')
-      }
-      const subtype = this.draggedCard.subtype
+      const playerIndex = this.playerList.findIndex(p => p.userId === userId)
+      if (playerIndex === -1) return
 
       const player = this.playerList[playerIndex]
-      console.log(
-        'playerList:',
-        this.playerList.map((p) => p.userId),
-      )
+      const subtype = this.draggedCard.subtype // 예: DESTROY_CART
+      const newStatus = [...player.status] // 기존 상태 복사
 
-      // 수리/블록 카드만 처리
-      const validTypes = [
-        'block_cart',
-        'block_lantern',
-        'block_pickaxe',
-        'repair_cart',
-        'repair_lantern',
-        'repair_pickaxe',
-        'repair_cart_lantern',
-        'repair_cart_pickaxe',
-        'repair_lantern_pickaxe',
-      ]
-
-      if (!validTypes.includes(subtype)) return
-
-      // 수리 카드 대응 관계 설정
       const repairToBlockMap = {
-        repair_cart: ['block_cart'],
-        repair_lantern: ['block_lantern'],
-        repair_pickaxe: ['block_pickaxe'],
-        repair_cart_lantern: ['block_cart', 'block_lantern'],
-        repair_cart_pickaxe: ['block_cart', 'block_pickaxe'],
-        repair_lantern_pickaxe: ['block_lantern', 'block_pickaxe'],
+        REPAIR_CART: ['DESTROY_CART'],
+        REPAIR_LIGHT: ['DESTROY_LIGHT'],
+        REPAIR_PICKAX: ['DESTROY_PICKAX'],
+        REPAIR_CART_LIGHT: ['DESTROY_CART', 'DESTROY_LIGHT'],
+        REPAIR_CART_PICKAX: ['DESTROY_CART', 'DESTROY_PICKAX'],
+        REPAIR_LIGHT_PICKAX: ['DESTROY_LIGHT', 'DESTROY_PICKAX'],
       }
 
-      if (subtype.startsWith('repair')) {
-        const blockTypes = repairToBlockMap[subtype]
-
-        // 플레이어가 수리 대상 block 중 하나라도 가지고 있는지 확인
-        const hasMatchingBlock = blockTypes.some((block) => player.status.includes(block))
-
-        if (hasMatchingBlock) {
-          // 첫 번째 일치하는 block 하나만 제거
-          const blockToRemove = blockTypes.find((block) => player.status.includes(block))
-          if (blockToRemove) {
-            const index = player.status.indexOf(blockToRemove)
-            if (index !== -1) {
-              player.status.splice(index, 1)
-            }
-          }
-
-          this.getRandomCard()
-        } else {
-          return // 수리할 대상이 없으면 아무것도 하지 않음
+      //파괴 카드라면 상태 추가
+      if (subtype.startsWith('DESTROY')) {
+        if (!newStatus.includes(subtype)) {
+          newStatus.push(subtype)
         }
 
-        const selectedTools = this.extractToolType(subtype)
-
-        const payload = {
+         /*카드 서버로 emit
+        this.$socket.emit('useBreakToolCard', {
           userId: this.userId,
-          //cardId: this.cardId
           cardType: 'ACTION',
-          actionCardType: 'REPAIR',
-          targetUserId: this.targetUserId,
+          actionCardType: subtype.startsWith('REPAIR') ? 'REPAIR' : 'DESTROY',
+          targetUserId: userId,
           roomId: this.gameRoomId,
-          selectedTool: selectedTools,
-        }
-        console.log('도구 수리 카드 emit payload:', payload) // 콘솔에 출력
+          selectedTool: this.extractToolType(subtype),
+        })*/
 
-        this.$socket.emit('useRepairToolCard', payload)
-      } else {
-        // block 카드일 경우: 중복 없이 추가
-        if (!player.status.includes(subtype)) {
-          const updatedStatus = [...player.status, subtype]
-          const updatedPlayer = { ...player, status: updatedStatus }
-          this.playerList[playerIndex] = updatedPlayer
-          this.playerList[playerIndex].status = updatedStatus
-          this.getRandomCard()
-        }
+      //수리 카드라면 대응되는 block 제거
+      }else if (subtype.startsWith('REPAIR')) {
+        const blocksToRemove = repairToBlockMap[subtype] || []
+        blocksToRemove.forEach(block => {
+          const idx = newStatus.indexOf(block)
+          if (idx !== -1) newStatus.splice(idx, 1)
+        })
 
-        const selectedTools = this.extractToolType(subtype)
-
-        const payload = {
+        /*카드 서버로 emit
+        this.$socket.emit('useRepairToolCard', {
           userId: this.userId,
-          //cardId: this.cardId
           cardType: 'ACTION',
-          actionCardType: 'DESTROY',
-          targetUserId: this.targetUserId,
+          actionCardType: subtype.startsWith('REPAIR') ? 'REPAIR' : 'DESTROY',
+          targetUserId: userId,
           roomId: this.gameRoomId,
-          selectedTool: selectedTools,
-        }
-        console.log('도구 고장 카드 emit payload:', payload) // 콘솔에 출력
-
-        this.$socket.emit('useRepairToolCard', payload)
+          selectedTool: this.extractToolType(subtype),
+        })*/
       }
 
+      //상태 업데이트 반영
+      this.playerList[playerIndex] = {
+        ...player,
+        status: newStatus
+      }
+
+      // 카드 제거 + 새로운 카드 받기
       this.removeDraggedCard()
-    },
+      this.getRandomCard()
+    },//onDropOnPlayer
+
     extractToolType(subtype) {
-      const tools = ['cart', 'lantern', 'pickaxe']
+      const tools = ['CART', 'LIGHT', 'PICKAX']
       return tools.filter((tool) => subtype.includes(tool))
     },
-
     // 맵 드래그하여 탐색할 때
     startDragging(event) {
       this.isDragging = true
