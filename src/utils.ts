@@ -1,4 +1,5 @@
 const IMAGE_BASE_URL = '/img/cards/'
+const CELL_POS_DIFF = 13
 
 export function getActionCardImageUrl(
   actionType: string,
@@ -19,4 +20,12 @@ export function getActionCardImageUrl(
 
 export function getPathCardImageUrl(pathType: string): string {
   return `${IMAGE_BASE_URL}/${pathType}.png`
+}
+
+export function convertToClientCellPos(x: number, y: number): { x: number; y: number } {
+  return { x: x + 13, y: 17 - y }
+}
+
+export function convertToServerCellPos(x: number, y: number): { x: number; y: number } {
+  return { x: x - 13, y: 17 - y }
 }
