@@ -87,16 +87,21 @@
     <!-- 푸터  -->
     <Footer :cards="cards" @drag-card="onCardDrag" />
 
-    <!-- ✅ 수리 선택 팝업 (REPAIR_CARD_LIGHT 등 사용 시) -->
     <div v-if="repairPopup.show" class="repair-popup">
       <p>어떤 도구를 수리하시겠습니까?</p>
-      <button
-        v-for="block in repairPopup.blocksToChoose"
-        :key="block"
-        @click="resolveRepairChoice(block)"
-      >
-        {{ block.replace('DESTROY_', '') }} 수리
-      </button>
+      <div class="repair-button-group"> <!-- ✅ 추가된 div -->
+        <button
+          v-for="block in repairPopup.blocksToChoose"
+          :key="block"
+          @click="resolveRepairChoice(block)"
+        >
+          <img 
+            :src="getIconForBlock(block)" 
+            :alt="block" 
+            class="repair-icon" 
+          />
+        </button>
+      </div>
     </div>
 
     <!-- 게임 결과 팝업 -->
@@ -254,12 +259,13 @@ export default {
   watch: {
     users: {
       handler(data) {
-        this.playerList = data.map((user) => ({
+        const playerImages = [player1, player2, player3, player4, player5]
+        this.playerList = data.map((user, index) => ({
           userId: user.id,
           nickname: user.nickname,
           role: user.role || '없음',
           gold: 0,
-          image: player1,
+          image: playerImages[index % playerImages.length],
           highlight: false,
           status: [],
         }))
@@ -540,50 +546,59 @@ export default {
         this.removeDraggedCard()
         this.getRandomCard()
       },//onDropOnPlayer
-    resolveRepairChoice(selectedBlock) {
-      const {
-        userId,
-        playerIndex,
-        cardSubtype,
-        statusCopy,
-      } = this.repairPopup
+      resolveRepairChoice(selectedBlock) {
+        const {
+          userId,
+          playerIndex,
+          cardSubtype,
+          statusCopy,
+        } = this.repairPopup
 
-      // 선택된 파괴 상태만 제거
-      const idx = statusCopy.indexOf(selectedBlock)
-      if (idx !== -1) statusCopy.splice(idx, 1)
+        // 선택된 파괴 상태만 제거
+        const idx = statusCopy.indexOf(selectedBlock)
+        if (idx !== -1) statusCopy.splice(idx, 1)
 
-      // 상태 업데이트
-      this.playerList[playerIndex] = {
-        ...this.playerList[playerIndex],
-        status: statusCopy
+        // 상태 업데이트
+        this.playerList[playerIndex] = {
+          ...this.playerList[playerIndex],
+          status: statusCopy
+        }
+
+        // emit 필요 시 사용
+        /*
+        this.$socket.emit('useRepairToolCard', {
+          userId: this.userId,
+          cardType: 'ACTION',
+          actionCardType: 'REPAIR',
+          targetUserId: userId,
+          roomId: this.gameRoomId,
+          selectedTool: this.extractToolType(selectedBlock),
+        })
+        */
+
+      // 카드 제거 및 새 카드 지급
+      this.removeDraggedCard()
+      this.getRandomCard()
+
+      // 팝업 닫기
+      this.repairPopup = {
+        show: false,
+        userId: null,
+        playerIndex: null,
+        cardSubtype: null,
+        blocksToChoose: [],
+        statusCopy: [],
       }
+      },
 
-      // emit 필요 시 사용
-      /*
-      this.$socket.emit('useRepairToolCard', {
-        userId: this.userId,
-        cardType: 'ACTION',
-        actionCardType: 'REPAIR',
-        targetUserId: userId,
-        roomId: this.gameRoomId,
-        selectedTool: this.extractToolType(selectedBlock),
-      })
-      */
-
-    // 카드 제거 및 새 카드 지급
-    this.removeDraggedCard()
-    this.getRandomCard()
-
-    // 팝업 닫기
-    this.repairPopup = {
-      show: false,
-      userId: null,
-      playerIndex: null,
-      cardSubtype: null,
-      blocksToChoose: [],
-      statusCopy: [],
-    }
-    },
+      getIconForBlock(block) {
+        const iconMap = {
+          DESTROY_CART: '/img/icons/cart_intact.png',
+          DESTROY_LIGHT: '/img/icons/lantern_intact.png',
+          DESTROY_PICKAX: '/img/icons/pick_intact.png',
+        }
+        return iconMap[block] || '/img/icons/default.png'
+      },
 
     extractToolType(subtype) {
       const tools = ['CART', 'LIGHT', 'PICKAX']
@@ -658,16 +673,33 @@ export default {
 
 .repair-popup button {
   margin: 10px 5px 0;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 8px;
   background-color: #f2f2f2;
   border: 1px solid #aaa;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
 }
 
 .repair-popup button:hover {
   background-color: #dcdcdc;
+}
+
+.repair-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.repair-button-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px; /* 버튼 사이 간격 */
+  margin-top: 10px;
 }
 </style>
