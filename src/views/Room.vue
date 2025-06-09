@@ -64,6 +64,7 @@
       :game-room-id="gameRoomId"
       :host-player-id="hostPlayer ? hostPlayer.id : null"
       :turn-player="turnPlayer"
+      :turn-end="turnEnd"
       @dragover.prevent
       @drop.prevent="handleDiscardCard"
       @end-game="handleEndGame"
@@ -160,6 +161,7 @@ export default {
       hoveredSlot: null,
       myNickname: null,
       turnPlayer: null,
+      turnEnd: false,
       showGameResultPopup: false,
       showGoldstoneCardDistributionPopup: false,
       draggedCard: null,
@@ -240,6 +242,7 @@ export default {
         name: data.nextPlayerName,
       }
       // alert('다음 턴으로 넘어갑니다.')
+      this.turnEnd = false
       this.$socket.getUserDeck(this.gameRoomId, this.userId)
     })
     this.socketInstance.on('goalCellInfo', (data) => {
@@ -460,6 +463,16 @@ export default {
       // 출발지 카드의 경우
       if (slot.x === 13 && slot.y === 15) return
 
+      // 이미 카드를 사용하거나, 버린 경우
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (this.turnEnd) {
+        alert('추가 행동을 할 수 없습니다.')
+        return
+      }
+
       // 목적지 카드의 경우
       if (slot.x === 21 && slot.y === 13) {
         this.revealGoalCard(0)
@@ -473,6 +486,9 @@ export default {
       else {
         this.onCardDrop(slot.x, slot.y)
       }
+
+      // 턴 종료 플래그 설정
+      this.turnEnd = true
     },
     // 카드가 드롭되었을 때 슬롯에 넣기
     async onCardDrop(x, y) {

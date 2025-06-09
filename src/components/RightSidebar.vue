@@ -58,6 +58,10 @@ export default {
       default: () => ({ id: null, name: '' }),
       required: true,
     },
+    turnEnd: {
+      type: Boolean,
+      required: true,
+    },
   },
   data() {
     return {
@@ -72,6 +76,10 @@ export default {
     drawCard() {
       if (this.turnPlayer.id !== this.userId) {
         alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (!this.turnEnd) {
+        alert('아직 아무런 행동을 수행하지 않았습니다.')
         return
       }
       this.$socket.nextTurn(this.gameRoomId)
