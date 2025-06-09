@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client'
+import { SocketRequestEventName } from '@/socket-helper/socket-event.constant.ts'
 
 export class SocketIoHelper {
   private readonly SOCKET_URL: string = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
@@ -20,18 +21,26 @@ export class SocketIoHelper {
   }
 
   joinGameRoom(userId: string, gameRoomId: string): void {
-    this.instance.emit('joinGameRoom', { userId, gameRoomId })
+    this.instance.emit(SocketRequestEventName.JOIN_GAME_ROOM, { userId, gameRoomId })
   }
 
   getGameRoomUsers(gameRoomId: string): void {
-    this.instance.emit('getGameRoomUsers', { gameRoomId })
+    this.instance.emit(SocketRequestEventName.GET_GAME_ROOM_USERS, { gameRoomId })
   }
 
   getGameState(gameRoomId: string): void {
-    this.instance.emit('getGameState', { gameRoomId })
+    this.instance.emit(SocketRequestEventName.GET_GAME_STATE, { gameRoomId })
   }
 
   startGame(userId: string, gameRoomId: string): void {
-    this.instance.emit('startGame', { userId, gameRoomId })
+    this.instance.emit(SocketRequestEventName.START_GAME, { userId, gameRoomId })
+  }
+
+  nextTurn(gameRoomId: string): void {
+    this.instance.emit(SocketRequestEventName.NEXT_TURN, { gameRoomId })
+  }
+
+  getUserDeck(gameRoomId: string, userId: string): void {
+    this.instance.emit(SocketRequestEventName.GET_USER_DECK, { gameRoomId, userId })
   }
 }

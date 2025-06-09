@@ -136,7 +136,6 @@ export default {
       hostPlayer: null,
       user: null,
       cards: [], // 유저 덱
-      cardsFromServer: [], // 서버에서 가져온 카드 목록
       availablecards: [], // 카드 풀
       availableCardsFromServer: [], // 서버에서 가져온 카드 풀
       playerList: [], // 사이드바용 가공된 리스트
@@ -199,7 +198,7 @@ export default {
     })
     this.socketInstance.on('yourRole', (data) => (this.playerList.role = data))
     this.socketInstance.on('yourCardDeck', (data) => {
-      this.cardsFromServer = data.map((card) => {
+      this.cards = data.map((card) => {
         return {
           id: card.id,
           type: card.cardType,
@@ -213,35 +212,26 @@ export default {
         }
       })
     })
-    this.$socket
-      .getInstance()
-      .on('gameState', ({ currentPlayerId, currentPlayerName, myCards }) => {
-        this.turnPlayer = {
-          id: currentPlayerId,
-          name: currentPlayerName,
-        }
-        this.cardsFromServer = myCards.map((card) => {
-          return {
-            id: card.id,
-            type: card.cardType,
-            image:
-              card.cardType === 'ACTION'
-                ? getActionCardImageUrl(
-                    card.actionCardType,
-                    card.targetTool ? [card.targetTool] : card.repairableTools,
-                  )
-                : getPathCardImageUrl(card.pathCardType),
-          }
-        })
-      })
+    this.socketInstance.on('gameState', ({ currentPlayerId, currentPlayerName }) => {
+      this.turnPlayer = {
+        id: currentPlayerId,
+        name: currentPlayerName,
+      }
+      this.$socket.getUserDeck(this.gameRoomId, this.userId)
+    })
+    this.socketInstance.on('turnChanged', (data) => {
+      this.turnPlayer = {
+        id: data.nextPlayerId,
+        name: data.nextPlayerName,
+      }
+      this.$socket.getUserDeck(this.gameRoomId, this.userId)
+    })
 
     this.nickname = this.user.nickname
   },
   watch: {
     users: {
       handler(data) {
-        const images = [player1, player2, player3, player4, player5]
-
         this.playerList = data.map((user) => ({
           userId: user.id,
           nickname: user.nickname,
@@ -255,16 +245,11 @@ export default {
       immediate: true,
       deep: true,
     },
-    cardsFromServer: {
-      handler(data) {
-        this.cards = data.map((card) => {
-          return {
-            id: card.id,
-            type: card.type,
-            image: card.image,
-          }
-        })
-      },
+    cards: {
+      immediate: true,
+      deep: true,
+    },
+    turnPlayer: {
       immediate: true,
       deep: true,
     },

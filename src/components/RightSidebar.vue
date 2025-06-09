@@ -65,7 +65,7 @@ export default {
   },
   methods: {
     drawCard() {
-      this.$emit('draw-card')
+      this.$socket.nextTurn(this.gameRoomId)
     },
     discardCard() {
       this.$emit('discard-card')
