@@ -71,12 +71,7 @@ export default {
       this.$emit('discard-card')
     },
     startGame() {
-      const payload = {
-        userId: this.userId,
-        gameRoomId: this.gameRoomId,
-      }
-
-      this.$socket.emit('startGame', payload)
+      this.$socket.startGame(this.userId, this.gameRoomId)
       this.startTimer()
     },
     endGame() {

@@ -130,6 +130,7 @@ export default {
   },
   data() {
     return {
+      socketInstance: this.$socket.getInstance(),
       gameRoomId: null,
       userId: null,
       hostPlayer: null,
@@ -174,8 +175,8 @@ export default {
     this.user = JSON.parse(localStorage.getItem('user'))
     this.myNickname = this.user.nickname
 
-    this.$socket.emit('getGameRoomUsers', { gameRoomId: this.gameRoomId })
-    this.$socket.on('gameRoomUsers', ({ users }) => {
+    this.$socket.getGameRoomUsers(this.gameRoomId)
+    this.socketInstance.on('gameRoomUsers', ({ users }) => {
       this.users = users.map(({ user }) => {
         return {
           id: user.id,
@@ -192,17 +193,12 @@ export default {
     })
   },
   mounted() {
-    this.$socket.on('errorEvent', (error) => {
-      console.error(error)
-      alert('서버 오류가 발생했습니다.')
-    })
-
-    this.$socket.on('gameStarted', (data) => {
+    this.socketInstance.on('gameStarted', (data) => {
       this.round = data.round
-      this.$socket.emit('getGameState', { gameRoomId: this.gameRoomId })
+      this.$socket.getGameState(this.gameRoomId)
     })
-    this.$socket.on('yourRole', (data) => (this.playerList.role = data))
-    this.$socket.on('yourCardDeck', (data) => {
+    this.socketInstance.on('yourRole', (data) => (this.playerList.role = data))
+    this.socketInstance.on('yourCardDeck', (data) => {
       this.cardsFromServer = data.map((card) => {
         return {
           id: card.id,
@@ -217,25 +213,27 @@ export default {
         }
       })
     })
-    this.$socket.on('gameState', ({ currentPlayerId, currentPlayerName, myCards }) => {
-      this.turnPlayer = {
-        id: currentPlayerId,
-        name: currentPlayerName,
-      }
-      this.cardsFromServer = myCards.map((card) => {
-        return {
-          id: card.id,
-          type: card.cardType,
-          image:
-            card.cardType === 'ACTION'
-              ? getActionCardImageUrl(
-                  card.actionCardType,
-                  card.targetTool ? [card.targetTool] : card.repairableTools,
-                )
-              : getPathCardImageUrl(card.pathCardType),
+    this.$socket
+      .getInstance()
+      .on('gameState', ({ currentPlayerId, currentPlayerName, myCards }) => {
+        this.turnPlayer = {
+          id: currentPlayerId,
+          name: currentPlayerName,
         }
+        this.cardsFromServer = myCards.map((card) => {
+          return {
+            id: card.id,
+            type: card.cardType,
+            image:
+              card.cardType === 'ACTION'
+                ? getActionCardImageUrl(
+                    card.actionCardType,
+                    card.targetTool ? [card.targetTool] : card.repairableTools,
+                  )
+                : getPathCardImageUrl(card.pathCardType),
+          }
+        })
       })
-    })
 
     this.nickname = this.user.nickname
   },

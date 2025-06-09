@@ -23,7 +23,7 @@ export default {
   },
 
   mounted() {
-    this.$socket.on('gameRoomJoined', (room) => {
+    this.$socket.getInstance().on('gameRoomJoined', (room) => {
       this.$router.push({
         path: '/room', //Room.vue 로 이동
         query: {
@@ -51,10 +51,7 @@ export default {
         this.$user = userRes.data
 
         // 2. 게임방 입장 요청
-        this.$socket.emit('joinGameRoom', {
-          userId: this.$user.id,
-          gameRoomId: this.$defaultGameRoomId,
-        })
+        this.$socket.joinGameRoom(this.$user.id, this.$defaultGameRoomId)
       } catch (error) {
         console.error('API 호출 실패:', error)
         alert('서버 오류가 발생했습니다.')
