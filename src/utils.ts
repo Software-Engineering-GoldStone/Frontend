@@ -22,10 +22,10 @@ export function getPathCardImageUrl(pathType: string): string {
   return `${IMAGE_BASE_URL}/${pathType}.png`
 }
 
-export function convertToClientCellPos(p: number): number {
-  return p + CELL_POS_DIFF
+export function convertToClientCellPos(x: number, y: number): { x: number; y: number } {
+  return { x: x + 13, y: 17 - y }
 }
 
-export function convertToServerCellPos(p: number): number {
-  return p - CELL_POS_DIFF
+export function convertToServerCellPos(x: number, y: number): { x: number; y: number } {
+  return { x: x - 13, y: 17 - y }
 }

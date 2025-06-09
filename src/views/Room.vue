@@ -118,7 +118,12 @@ import player2 from '@/assets/player2.png'
 import player3 from '@/assets/player3.png'
 import player4 from '@/assets/player4.png'
 import player5 from '@/assets/player5.png'
-import { convertToClientCellPos, getActionCardImageUrl, getPathCardImageUrl } from '@/utils.js'
+import {
+  convertToClientCellPos,
+  convertToServerCellPos,
+  getActionCardImageUrl,
+  getPathCardImageUrl,
+} from '@/utils.js'
 
 export default {
   components: {
@@ -234,15 +239,15 @@ export default {
         id: data.nextPlayerId,
         name: data.nextPlayerName,
       }
-      alert('다음 턴으로 넘어갑니다.')
+      // alert('다음 턴으로 넘어갑니다.')
       this.$socket.getUserDeck(this.gameRoomId, this.userId)
     })
     this.socketInstance.on('goalCellInfo', (data) => {
       data.forEach((cell) => {
-        const idx = this.slots.findIndex(
-          (slot) =>
-            slot.x === convertToClientCellPos(cell.x) && slot.y === convertToClientCellPos(cell.y),
-        )
+        const idx = this.slots.findIndex((slot) => {
+          const np = convertToClientCellPos(cell.x, cell.y)
+          return slot.x === np.x && slot.y === np.y
+        })
         if (idx === -1) {
           console.error('slot not found')
           console.error(`Cell from server: ${cell}`)
@@ -255,6 +260,43 @@ export default {
             ...cell.card,
             image: '/img/cards/goal_back.png',
           },
+          sides: cell.sides,
+        }
+      })
+    })
+    this.socketInstance.on('cardPlayed', (data) => {
+      if (data.success === true) {
+        this.$socket.getBoardInfo(this.gameRoomId)
+      }
+    })
+    this.socketInstance.on('boardInfo', ({ cellInfo }) => {
+      cellInfo.forEach((cell) => {
+        const isStartCell = cell.x === 0 && cell.y === 2
+        const isGoalCell1 = cell.x === 8 && [0, 2, 4].includes(cell.y)
+        if (isStartCell || isGoalCell1) {
+          return
+        }
+
+        const idx = this.slots.findIndex((slot) => {
+          const np = convertToClientCellPos(cell.x, cell.y)
+          return slot.x === np.x && slot.y === np.y
+        })
+        if (idx === -1) {
+          console.error('slot not found')
+          console.error(`Cell from server: ${cell}`)
+          return
+        }
+
+        const cellCard = cell.card
+
+        this.slots[idx] = {
+          ...this.slots[idx],
+          card: cellCard
+            ? {
+                ...cellCard,
+                image: getPathCardImageUrl(cellCard.pathCardType),
+              }
+            : null,
           sides: cell.sides,
         }
       })
@@ -440,12 +482,8 @@ export default {
       const slotnow = this.slots.find((s) => s.x === x && s.y === y)
       const payload = {
         userId: this.userId,
+        gameRoomId: this.gameRoomId,
         cardId: this.draggedCard.id,
-        cardType: 'ACTION',
-        actionCardType: 'ROCKFALL',
-        roomId: this.gameRoomId,
-        targetCellX: x - 13,
-        targetCellY: 17 - y,
       }
 
       // 낙석 카드를 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
@@ -473,18 +511,16 @@ export default {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
         return
       } else {
-        if (this.draggedCard.type === 'path') {
-          this.$socket.emit('usePathCard', payload, (response) => {
-            console.log('payload: ', payload)
-            if (response.success === 'true') {
-              slotnow.card = this.draggedCard
-              this.removeDraggedCard()
-              this.getRandomCard()
-              console.log('길 카드 배치 성공: ', response.message)
-            } else {
-              console.warn('길 카드 실패: ', response.message)
-            }
+        if (this.draggedCard.type === 'PATH') {
+          const np = convertToServerCellPos(Number(x), Number(y))
+
+          this.$socket.playCard(payload.gameRoomId, payload.userId, payload.cardId, {
+            x: np.x,
+            y: np.y,
           })
+
+          slotnow.card = this.draggedCard
+          this.removeDraggedCard()
         }
       }
     },

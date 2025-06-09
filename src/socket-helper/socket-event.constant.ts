@@ -6,6 +6,9 @@ export enum SocketRequestEventName {
   NEXT_TURN = 'nextTurn',
   GET_USER_DECK = 'getUserDeck',
   GET_GOAL_CELL_INFO = 'getGoalCellInfo',
+  PLAY_CARD = 'playCard',
+  DISCARD_CARD = 'discardCard',
+  GET_BOARD_INFO = 'getBoardInfo',
 }
 
 export enum SocketResponseEventName {}

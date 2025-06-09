@@ -47,4 +47,17 @@ export class SocketIoHelper {
   getGoalCellInfo(gameRoomId: string): void {
     this.instance.emit(SocketRequestEventName.GET_GOAL_CELL_INFO, { gameRoomId })
   }
+
+  playCard(gameRoomId: string, userId: string, cardId: string, extraData: any): void {
+    this.instance.emit(SocketRequestEventName.PLAY_CARD, {
+      gameRoomId,
+      userId,
+      cardId,
+      ...extraData,
+    })
+  }
+
+  getBoardInfo(gameRoomId: string): void {
+    this.instance.emit(SocketRequestEventName.GET_BOARD_INFO, { gameRoomId })
+  }
 }
