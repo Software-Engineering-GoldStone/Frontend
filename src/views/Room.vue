@@ -43,7 +43,7 @@
               <!-- 백엔드 기준 -->
               <!-- start cell : (0, 2) -> (13, 15) -->
               <!-- goal cell : (8, 0), (8, 2), (8, 4) -> (21, 13), (21, 15), (21, 17) -->
-              <!-- 프론트로 치환하면 13의 차이가 발생 -->
+              <!-- 프론트로 치환하면 x좌표는 13, y좌표는 17의 차이가 발생 -->
               <img
                 v-if="slot.x === 13 && slot.y === 15"
                 :src="startCard.image"
@@ -270,7 +270,9 @@ export default {
     })
     this.socketInstance.on('cardPlayed', (data) => {
       if (data.success === true) {
-        this.changedTargetSlot.card = this.draggedCard
+        if (this.changedTargetSlot?.card) {
+          this.changedTargetSlot.card = this.draggedCard
+        }
         this.removeDraggedCard()
         this.$socket.getBoardInfo(this.gameRoomId)
       }
@@ -410,23 +412,20 @@ export default {
       this.getRandomCard()
     },
     async handleDiscardCard() {
-      const payload = {
-        userId: this.userId,
-        gameRoomId: this.gameRoomId,
-        cardId: this.draggedCard.id,
+      // 이미 카드를 사용하거나, 버린 경우
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (this.turnEnd) {
+        alert('추가 행동을 할 수 없습니다.')
+        return
       }
 
-      this.$socket.emit('discardCard', payload, (response) => {
-        console.log('payload: ', payload)
-        if (response.success === 'true') {
-          console.log('카드 버리기 성공: ', response.message)
+      this.$socket.discardCard(this.userId, this.gameRoomId, this.draggedCard.id)
 
-          this.removeDraggedCard() // 로컬 카드에서 제거
-          this.getRandomCard() // 새 카드 지급
-        } else {
-          console.error('카드 버리기 실패: ', response.message)
-        }
-      })
+      // 턴 종료 플래그 설정
+      this.turnEnd = true
     },
     handleEndGame() {
       this.showGameResultPopup = true
