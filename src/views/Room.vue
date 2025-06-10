@@ -510,29 +510,23 @@ export default {
       }
 
       // 낙석 카드를 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
-      if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
+      if (this.draggedCard && this.draggedCard.subtype === 'FALLING_ROCK') {
         if (!slotnow.card) return
 
-        this.$socket.emit('useFallingRockCard', payload, (response) => {
-          console.log('payload: ', payload)
-          if (response.success === 'true') {
-            slotnow.card = null
-            this.removeDraggedCard()
-            this.getRandomCard()
-            console.log('낙석 카드 사용 성공: ', response.message)
-          } else {
-            console.warn('낙석 카드 실패: ', response.message)
-          }
+        const np = convertToServerCellPos(Number(x), Number(y))
+        this.$socket.playCard(payload.gameRoomId, payload.userId, payload.cardId, {
+          x: np.x,
+          y: np.y,
         })
 
-        return
+        this.changedTargetSlot = slotnow
       } else if (
         this.draggedCard &&
         this.draggedCard.type === 'action' &&
         this.draggedCard.subtype !== 'rockfall'
       ) {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
-        return
+        alert('이 행동 카드는 슬롯에 놓을 수 없습니다.')
       } else {
         if (this.draggedCard.type === 'PATH') {
           const np = convertToServerCellPos(Number(x), Number(y))
