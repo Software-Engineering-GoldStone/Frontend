@@ -43,7 +43,7 @@
               <!-- 백엔드 기준 -->
               <!-- start cell : (0, 2) -> (13, 15) -->
               <!-- goal cell : (8, 0), (8, 2), (8, 4) -> (21, 13), (21, 15), (21, 17) -->
-              <!-- 프론트로 치환하면 13의 차이가 발생 -->
+              <!-- 프론트로 치환하면 x좌표는 13, y좌표는 17의 차이가 발생 -->
               <img
                 v-if="slot.x === 13 && slot.y === 15"
                 :src="startCard.image"
@@ -171,6 +171,7 @@ export default {
         card: null,
       })),
       changedTargetSlot: null,
+      changedNewStatus: null,
       offset: { x: -256, y: -128 },
       isDragging: false,
       dragStart: { x: 0, y: 0 },
@@ -270,7 +271,9 @@ export default {
     })
     this.socketInstance.on('cardPlayed', (data) => {
       if (data.success === true) {
-        this.changedTargetSlot.card = this.draggedCard
+        if (this.changedTargetSlot?.card) {
+          this.changedTargetSlot.card = this.draggedCard
+        }
         this.removeDraggedCard()
         this.$socket.getBoardInfo(this.gameRoomId)
       }
@@ -336,6 +339,10 @@ export default {
       deep: true,
     },
     turnPlayer: {
+      immediate: true,
+      deep: true,
+    },
+    playerList: {
       immediate: true,
       deep: true,
     },
@@ -410,23 +417,20 @@ export default {
       this.getRandomCard()
     },
     async handleDiscardCard() {
-      const payload = {
-        userId: this.userId,
-        gameRoomId: this.gameRoomId,
-        cardId: this.draggedCard.id,
+      // 이미 카드를 사용하거나, 버린 경우
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (this.turnEnd) {
+        alert('추가 행동을 할 수 없습니다.')
+        return
       }
 
-      this.$socket.emit('discardCard', payload, (response) => {
-        console.log('payload: ', payload)
-        if (response.success === 'true') {
-          console.log('카드 버리기 성공: ', response.message)
+      this.$socket.discardCard(this.userId, this.gameRoomId, this.draggedCard.id)
 
-          this.removeDraggedCard() // 로컬 카드에서 제거
-          this.getRandomCard() // 새 카드 지급
-        } else {
-          console.error('카드 버리기 실패: ', response.message)
-        }
-      })
+      // 턴 종료 플래그 설정
+      this.turnEnd = true
     },
     handleEndGame() {
       this.showGameResultPopup = true
@@ -510,29 +514,23 @@ export default {
       }
 
       // 낙석 카드를 이미 카드가 있는 슬롯에 드롭 -> 두 카드 모두 삭제
-      if (this.draggedCard && this.draggedCard.subtype === 'rockfall') {
+      if (this.draggedCard && this.draggedCard.subtype === 'FALLING_ROCK') {
         if (!slotnow.card) return
 
-        this.$socket.emit('useFallingRockCard', payload, (response) => {
-          console.log('payload: ', payload)
-          if (response.success === 'true') {
-            slotnow.card = null
-            this.removeDraggedCard()
-            this.getRandomCard()
-            console.log('낙석 카드 사용 성공: ', response.message)
-          } else {
-            console.warn('낙석 카드 실패: ', response.message)
-          }
+        const np = convertToServerCellPos(Number(x), Number(y))
+        this.$socket.playCard(payload.gameRoomId, payload.userId, payload.cardId, {
+          x: np.x,
+          y: np.y,
         })
 
-        return
+        this.changedTargetSlot = slotnow
       } else if (
         this.draggedCard &&
         this.draggedCard.type === 'action' &&
         this.draggedCard.subtype !== 'rockfall'
       ) {
         console.log('이 action 카드는 슬롯에 놓을 수 없습니다.')
-        return
+        alert('이 행동 카드는 슬롯에 놓을 수 없습니다.')
       } else {
         if (this.draggedCard.type === 'PATH') {
           const np = convertToServerCellPos(Number(x), Number(y))
@@ -549,7 +547,19 @@ export default {
     //player에게 행동카드 사용할 때
     onDropOnPlayer(userId) {
       console.log('드롭된 대상 userId:', userId)
-      if (this.draggedCard.type !== 'ACTION') return
+      // 이미 카드를 사용하거나, 버린 경우
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (this.turnEnd) {
+        alert('추가 행동을 할 수 없습니다.')
+        return
+      }
+      if (this.draggedCard.type !== 'ACTION') {
+        alert('사용할 수 없는 대상입니다.')
+        return
+      }
 
       const playerIndex = this.playerList.findIndex((p) => p.userId === userId)
       if (playerIndex === -1) return
@@ -573,6 +583,10 @@ export default {
           newStatus.push(subtype)
         }
         // 서버 emit 생략...
+        this.$socket.playCard(this.gameRoomId, this.userId, this.draggedCard.id, {
+          targetUserID: userId,
+          targetTool: subtype.split('_')[1],
+        })
       } else if (subtype.startsWith('REPAIR')) {
         // 실제 플레이어 상태에 있는 고장 상태만 필터링
         const possibleBlocks = repairToBlockMap[subtype] || []
@@ -605,9 +619,8 @@ export default {
         status: newStatus,
       }
 
-      // 카드 제거 + 새 카드 받기
-      this.removeDraggedCard()
-      this.getRandomCard()
+      // 본인 턴 종료
+      this.turnEnd = true
     }, //onDropOnPlayer
     resolveRepairChoice(selectedBlock) {
       const { userId, playerIndex, cardSubtype, statusCopy } = this.repairPopup
@@ -623,20 +636,10 @@ export default {
       }
 
       // emit 필요 시 사용
-      /*
-        this.$socket.emit('useRepairToolCard', {
-          userId: this.userId,
-          cardType: 'ACTION',
-          actionCardType: 'REPAIR',
-          targetUserId: userId,
-          roomId: this.gameRoomId,
-          selectedTool: this.extractToolType(selectedBlock),
-        })
-        */
-
-      // 카드 제거 및 새 카드 지급
-      this.removeDraggedCard()
-      this.getRandomCard()
+      this.$socket.playCard(this.gameRoomId, this.userId, this.draggedCard.id, {
+        targetUserId: userId,
+        targetTool: selectedBlock.split('_')[1],
+      })
 
       // 팝업 닫기
       this.repairPopup = {

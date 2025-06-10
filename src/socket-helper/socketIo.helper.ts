@@ -57,6 +57,10 @@ export class SocketIoHelper {
     })
   }
 
+  discardCard(userId: string, gameRoomId: string, cardId: string): void {
+    this.instance.emit(SocketRequestEventName.DISCARD_CARD, { userId, gameRoomId, cardId })
+  }
+
   getBoardInfo(gameRoomId: string): void {
     this.instance.emit(SocketRequestEventName.GET_BOARD_INFO, { gameRoomId })
   }
