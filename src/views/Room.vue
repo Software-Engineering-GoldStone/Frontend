@@ -171,6 +171,7 @@ export default {
         card: null,
       })),
       changedTargetSlot: null,
+      changedNewStatus: null,
       offset: { x: -256, y: -128 },
       isDragging: false,
       dragStart: { x: 0, y: 0 },
@@ -338,6 +339,10 @@ export default {
       deep: true,
     },
     turnPlayer: {
+      immediate: true,
+      deep: true,
+    },
+    playerList: {
       immediate: true,
       deep: true,
     },
@@ -542,7 +547,19 @@ export default {
     //player에게 행동카드 사용할 때
     onDropOnPlayer(userId) {
       console.log('드롭된 대상 userId:', userId)
-      if (this.draggedCard.type !== 'ACTION') return
+      // 이미 카드를 사용하거나, 버린 경우
+      if (this.turnPlayer.id !== this.userId) {
+        alert('현재 본인의 턴이 아닙니다.')
+        return
+      }
+      if (this.turnEnd) {
+        alert('추가 행동을 할 수 없습니다.')
+        return
+      }
+      if (this.draggedCard.type !== 'ACTION') {
+        alert('사용할 수 없는 대상입니다.')
+        return
+      }
 
       const playerIndex = this.playerList.findIndex((p) => p.userId === userId)
       if (playerIndex === -1) return
@@ -566,6 +583,10 @@ export default {
           newStatus.push(subtype)
         }
         // 서버 emit 생략...
+        this.$socket.playCard(this.gameRoomId, this.userId, this.draggedCard.id, {
+          targetUserID: userId,
+          targetTool: subtype.split('_')[1],
+        })
       } else if (subtype.startsWith('REPAIR')) {
         // 실제 플레이어 상태에 있는 고장 상태만 필터링
         const possibleBlocks = repairToBlockMap[subtype] || []
@@ -598,9 +619,8 @@ export default {
         status: newStatus,
       }
 
-      // 카드 제거 + 새 카드 받기
-      this.removeDraggedCard()
-      this.getRandomCard()
+      // 본인 턴 종료
+      this.turnEnd = true
     }, //onDropOnPlayer
     resolveRepairChoice(selectedBlock) {
       const { userId, playerIndex, cardSubtype, statusCopy } = this.repairPopup
@@ -616,20 +636,10 @@ export default {
       }
 
       // emit 필요 시 사용
-      /*
-        this.$socket.emit('useRepairToolCard', {
-          userId: this.userId,
-          cardType: 'ACTION',
-          actionCardType: 'REPAIR',
-          targetUserId: userId,
-          roomId: this.gameRoomId,
-          selectedTool: this.extractToolType(selectedBlock),
-        })
-        */
-
-      // 카드 제거 및 새 카드 지급
-      this.removeDraggedCard()
-      this.getRandomCard()
+      this.$socket.playCard(this.gameRoomId, this.userId, this.draggedCard.id, {
+        targetUserId: userId,
+        targetTool: selectedBlock.split('_')[1],
+      })
 
       // 팝업 닫기
       this.repairPopup = {
